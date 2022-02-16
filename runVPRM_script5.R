@@ -19,7 +19,9 @@ if (is.na(cores)) cores=1
 registerDoParallel(cores)
 print(paste0("n. of cores is ",cores))
 
-setwd("/projectnb/buultra/iasmith/VPRM_urban_30m/")
+#setwd("/projectnb/buultra/iasmith/VPRM_urban_30m/")
+
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
 city = 'NIST30'
@@ -30,12 +32,12 @@ veg_type = 'DBF'
 nrow_block=15000
 
 # Climate data folder
-dir_clima = paste0('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/2018') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
+dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/rap_goes') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
 
 ## Define the path to the folder where outputs are saved 
 dir.create(paste0("outputs"), showWarnings = FALSE)
-dir.create(paste0("outputs/",city), showWarnings = FALSE)
-dir_out = paste0("outputs/",city)
+dir.create(paste0("outputs/",city,"/test"), showWarnings = FALSE)
+dir_out = paste0("outputs/",city,"/test")
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){
@@ -48,10 +50,10 @@ tifdt_fun = function(raster,name){
 
 ### LOAD DATA
 ## Land cover and ISA
-LC = raster('/projectnb/buultra/iasmith/VPRM_urban_30m/Landcover/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/lc_isa/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 LC.dt = tifdt_fun(LC,"LandCover")
 
-NLCD_ISA = raster('/projectnb/buultra/iasmith/VPRM_urban_30m/ISA/ISA_NIST.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+NLCD_ISA = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/lc_isa/ISA_NIST.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 ISA.dt = tifdt_fun(NLCD_ISA,"ISA")
 
 ## Merge LC and ISA
@@ -67,9 +69,9 @@ print("LC, ISA loaded!")
 ## Import Phenology data
 # Growing Season calendar from resampled Multi Source Land Surface Phenology Product product (NASA; https://lpdaac.usgs.gov/products/mslsp30nav001/)
 # 10% EVI increase
-greenup = raster('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 # 85% EVI decrease
-dormancy <- raster('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/dormancy.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/dormancy.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 SoGS.dt = tifdt_fun(greenup,"SOS")
 EoGS.dt = tifdt_fun(dormancy,"EOS")
 GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
@@ -77,7 +79,7 @@ GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
 rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 
 ## Landsat EVI and LSWI
-LS_VI.dt = fread('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/evi_lswi/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
 
 ## Load EVI data for a reference (Fully forested) pixel
 EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 5043),]  
@@ -88,7 +90,7 @@ EVI_ref = rep(EVI_ref,each=24)
 #############################################################################
 
 ### Load script that defines model parameters and calculates fluxes
-source("VPRM_parameters_equations.R") # Parameters/equations script found in # Phenology data in /urbanVPRM_30m/scripts/
+source("UrbanVPRM_code/VPRM_parameters_equations.R") # Parameters/equations script found in # Phenology data in /urbanVPRM_30m/scripts/
 print("Get scale factors and GEE and Respiration fluxes")
 
 ## First define time period datatable. It will give the first 2 columns of the output data table.. 
@@ -122,8 +124,8 @@ for(j in 1:length(blocks)) {
   }
   
 
-  output.dt = foreach(i=block:(lim-1)) %dopar% {
-    
+  output.dt = foreach(i=block:(lim-1)) %do% {
+    #print(i)
     ### If EVI time series is made of NAs, skip to the next iteration/pixel
     if(all(is.na(LS_VI.dt$EVI[LS_VI.dt$Index==i]))){
       

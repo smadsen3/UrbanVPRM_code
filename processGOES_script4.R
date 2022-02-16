@@ -17,7 +17,10 @@ library(raster)
 library(sp)
 library(parallel)
 
-setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
+
+
+#setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
 xmin = -77.241397
@@ -28,11 +31,11 @@ city = 'NIST30'
 yr = 2018
 
 # Set input and create output files directories
-inDIR <- paste0('/projectnb/buultra/iasmith/GOES/2018/origTIFF/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2018/origTIFF/')
 outDIR <- paste0(city,'/',yr)
 
 # Time file
-times <- fread(paste0('/projectnb/buultra/iasmith/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -41,7 +44,7 @@ RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -96,7 +99,7 @@ setkey(dm,x,y,datetime)
 # GOES ssi data has NAs where the archive files are not available. These dates must be inspected, since interpolation to fill NAs is inappropriate for nighttime hours. For the year 2018, all of the missing data occur during nighttime hours. These are set to zero for the year.
 
 # Load RAP .rds file to join with GOES completed data.table
-rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'_fill.rds'))
+rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'.rds'))
 setkey(rap2,x,y,datetime)
 rap2 <- dm[rap2]
 td <- times[,.(datetime,hour)]
@@ -149,7 +152,7 @@ colnames(rap2) = c("Index","x","y","datetime","HoY","tmpC","swRad")
 rap2 <- rap2[,-1]
 
 # import raster used for indexing
-ls <- raster('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){
@@ -165,8 +168,8 @@ Idx.dt <- Idx.dt[,-4]
 colnames(Idx.dt) <- c('Index','x','y')
 
 # Add new Index to the rap/goes data table
-rap2 <- LC.dt[rap2,on = c('x','y'), roll = 'nearest']
-setkey(LC.dt, x,y)
+rap2 <- Idx.dt[rap2,on = c('x','y'), roll = 'nearest']
+setkey(Idx.dt, x,y)
 setkey(rap2,x,y)
 
 # Save in RDS binary format to preserve space

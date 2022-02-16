@@ -18,7 +18,7 @@ library("lubridate")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 # LANDSAT 8 files
-setwd('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 ls8 <- list.files()
 for (i in 1:length(ls8)){
   ## read in raster stack
@@ -48,7 +48,10 @@ for (i in 1:length(ls8)){
   ## LSWI
   LSWI.dt = as.data.table(as.data.frame(file[[14]], xy=T))
   LSWI.dt = cbind(1:ncell(file[[14]]), LSWI.dt)
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
+  #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
+  #The line above was trying to use the first column of the file instead of the
+  # file name (replacement bellow uses file name)
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],3,6))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -56,7 +59,7 @@ for (i in 1:length(ls8)){
 }
 
 # landsat 7
-setwd('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/landsat/landsat7')
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat7')
 ls7 <- list.files()
 for (i in 1:length(ls7)){
   ## read in raster data
@@ -86,7 +89,9 @@ for (i in 1:length(ls7)){
   ## LSWI
   LSWI.dt = as.data.table(as.data.frame(file[[13]], xy=T))
   LSWI.dt = cbind(1:ncell(file[[13]]), LSWI.dt)
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
+  #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
+  # Line above did not work, see comment in previous loop
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],3,6))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -154,5 +159,5 @@ for(i in unique(inter_evi_lswi$Index)){
 }
 
 # Write Table
-write.table(inter_evi_lswi,'/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/evi_lswi_interpolated_ls7and8.csv',row.names = F,
+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/evi_lswi_interpolated_ls7and8.csv',row.names = F,
             sep=',')

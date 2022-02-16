@@ -18,7 +18,7 @@ library(raster)
 library(sp)
 library(parallel)
 
-setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/')
 
 # define study domain, city and year
 xmin = -77.241397
@@ -30,14 +30,14 @@ yr = 2018
 
 
 # Set/Create file directories
-inDIR <- paste0('/projectnb/buultra/iasmith/RAP/2018/origTIFF/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/origTIFF/')
 dir.create(paste0(city),showWarnings = FALSE)
 dir.create(paste0(city,'/',yr),showWarnings = FALSE)
 outDIR <- paste0(city,'/',yr)
-rapDIR <- paste0('/projectnb/buultra/iasmith/RAP/2018/RAPgrib/')
+rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/RAPgrib/subfolder/')
 
 # Time file
-times <- fread(paste0('/projectnb/buultra/iasmith/RAP/2018/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -47,7 +47,7 @@ RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6
 ###############################################################################
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('/projectnb/buultra/iasmith/VPRM_urban_30m/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
 
@@ -63,11 +63,12 @@ dom.bbextra <- as(gridXY,'SpatialPolygonsDataFrame')
 RAP.XY <- projectRaster(raster(gridXY),crs=LANDSAT_CRS)
 
 # Obtain correct extent for RAP files from one of the raw RAP grib2 data files
-rl.grb <- list.files(path=rapDIR,pattern='.grb2') # rap data downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
-RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1])))
+rl.grb <- list.files(path=rapDIR,recursive='TRUE',pattern='.grb2') # rap data downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
+RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1]))) #DOESN'T UNDERSTAND PROJECTION....
+#looks like I only need to keep one .grb2 file, the rest I can delete I think
 
 # Create file list of converted RAP .tif data files to crop and project 
-rl <- list.files(path=inDIR,pattern='rap')
+rl <- list.files(path=inDIR,pattern='rap') #need to create tif files for rap data
 
 # function to extract RAP data for study domain
 rap2landsat <- function(dir,file,domain){
