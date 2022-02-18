@@ -1,11 +1,15 @@
 ## IAN SMITH
 ## iasmith [at] bu.edu
 
-# This script extracts hourly surface solar irradiance data for the study domain from the Geostationary Operational Environmental Satellite 16 (GOES16; EUMETSAT OSI SAF)
+# This script extracts hourly surface solar irradiance data for the study domain
+# from the Geostationary Operational Environmental Satellite 16 (GOES16; EUMETSAT OSI SAF)
 # This script creates the file rap_goes_NIST30_2018_hourly.rds used in Winbourne et al. 2021
-# Directories in this script correspond to the structure of the computing cluster where model calculations were executed.
-# To run this code, file paths and directories will need to be restructured to import/write files
-# Hourly GOES data were downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
+# Directories in this script correspond to the structure of the computing cluster 
+# where model calculations were executed.
+# To run this code, file paths and directories will need to be restructured to 
+# import/write files
+# Hourly GOES data were downloaded from 
+# ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
 
 library(StreamMetabolism)
 library(rgdal)
@@ -23,11 +27,11 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
-xmin = -77.241397
-xmax = -77.202314
-ymin =  39.115549
-ymax =  39.139102
-city = 'NIST30'
+xmin = -79.9333-4/240
+xmax = -79.9333+4/240
+ymin =  44.31667-4/240
+ymax =  44.31667+4/240
+city = 'Borden'
 yr = 2018
 
 # Set input and create output files directories
@@ -39,12 +43,12 @@ times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM
 setkey(times,chr)
 
 # CRS list
-LANDSAT_CRS = "+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
 RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6371229 +b=6371229 +units=m +no_defs"
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -152,7 +156,7 @@ colnames(rap2) = c("Index","x","y","datetime","HoY","tmpC","swRad")
 rap2 <- rap2[,-1]
 
 # import raster used for indexing
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){

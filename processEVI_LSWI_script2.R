@@ -1,11 +1,16 @@
 ## IAN SMITH
 ## iasmith [at] bu.edu
 
-# This script calculates, and interpolates daily EVI and LSWI values for each pixel in the study domain from Landsat 7/8 surface reflectance data
-# This script creates the file evi_lswi_interpolated_ls7and8.csv used in Winbourne et al. 2021
-# Directories in this script correspond to the structure of the computing cluster where model calculations were executed.
-# To run this code, file paths and directories will need to be restructured to import/write files
-# Landsat 7 and 8 Collection 1 surface reflectance data were downloaded from Google Earth Engineand cropped rasters available on REPOSITRORY in /driver_data/landsat 
+# This script calculates, and interpolates daily EVI and LSWI values for each 
+# pixel in the study domain from Landsat 7/8 surface reflectance data
+# This script creates the file evi_lswi_interpolated_ls7and8.csv used in 
+# Winbourne et al. 2021
+# Directories in this script correspond to the structure of the computing 
+# cluster where model calculations were executed.
+# To run this code, file paths and directories will need to be restructured to 
+# import/write files
+# Landsat 7 and 8 Collection 1 surface reflectance data were downloaded from 
+# Google Earth Engine and cropped rasters available on REPOSITRORY in /driver_data/landsat 
 
 # import packages
 library("data.table")
@@ -101,10 +106,10 @@ for (i in 1:length(ls7)){
 ## merge daily files into one for all of 2018
 EVI_LSWI.dt <- rbind(EVI_LSWI1_7.dt,EVI_LSWI2_7.dt,EVI_LSWI3_7.dt,EVI_LSWI4_7.dt,EVI_LSWI5_7.dt,EVI_LSWI6_7.dt,
                      EVI_LSWI7_7.dt,EVI_LSWI8_7.dt,EVI_LSWI9_7.dt,EVI_LSWI10_7.dt,EVI_LSWI11_7.dt, EVI_LSWI12_7.dt,
-                     EVI_LSWI13_7.dt, EVI_LSWI14_7.dt, EVI_LSWI15_7.dt, EVI_LSWI16_7.dt, EVI_LSWI17_7.dt, 
+                     EVI_LSWI13_7.dt, EVI_LSWI14_7.dt, 
                      EVI_LSWI1_8.dt,EVI_LSWI2_8.dt,EVI_LSWI3_8.dt,EVI_LSWI4_8.dt,EVI_LSWI5_8.dt,EVI_LSWI6_8.dt,
                      EVI_LSWI7_8.dt,EVI_LSWI8_8.dt,EVI_LSWI9_8.dt,EVI_LSWI10_8.dt,EVI_LSWI11_8.dt,EVI_LSWI12_8.dt,
-                     EVI_LSWI13_8.dt,EVI_LSWI14_8.dt,EVI_LSWI15_8.dt)
+                     EVI_LSWI13_8.dt,EVI_LSWI14_8.dt)
 
 ## order by DOY
 EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
@@ -159,5 +164,5 @@ for(i in unique(inter_evi_lswi$Index)){
 }
 
 # Write Table
-write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/evi_lswi_interpolated_ls7and8.csv',row.names = F,
+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/evi_lswi_interpolated_ls7and8.csv',row.names = F,
             sep=',')

@@ -21,11 +21,11 @@ library(parallel)
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/')
 
 # define study domain, city and year
-xmin = -77.241397
-xmax = -77.202314
-ymin =  39.115549
-ymax =  39.139102
-city = 'NIST30'
+xmin = -79.9333-4/240
+xmax = -79.9333+4/240
+ymin =  44.31667-4/240
+ymax =  44.31667+4/240
+city = 'Borden'
 yr = 2018
 
 
@@ -41,13 +41,13 @@ times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM
 setkey(times,chr)
 
 # CRS list
-LANDSAT_CRS = "+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
 RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6371229 +b=6371229 +units=m +no_defs"
 
 ###############################################################################
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
 
@@ -64,7 +64,7 @@ RAP.XY <- projectRaster(raster(gridXY),crs=LANDSAT_CRS)
 
 # Obtain correct extent for RAP files from one of the raw RAP grib2 data files
 rl.grb <- list.files(path=rapDIR,recursive='TRUE',pattern='.grb2') # rap data downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
-RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1]))) #DOESN'T UNDERSTAND PROJECTION....
+RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1]))) #DOESN'T UNDERSTAND PROJECTION...?
 #looks like I only need to keep one .grb2 file, the rest I can delete I think
 
 # Create file list of converted RAP .tif data files to crop and project 

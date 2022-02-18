@@ -24,7 +24,7 @@ print(paste0("n. of cores is ",cores))
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
-city = 'NIST30'
+city = 'Borden'
 yr = 2018
 veg_type = 'DBF'
 
@@ -50,10 +50,10 @@ tifdt_fun = function(raster,name){
 
 ### LOAD DATA
 ## Land cover and ISA
-LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/lc_isa/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/LC_Borden.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 LC.dt = tifdt_fun(LC,"LandCover")
 
-NLCD_ISA = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/lc_isa/ISA_NIST.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+NLCD_ISA = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_Borden.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 ISA.dt = tifdt_fun(NLCD_ISA,"ISA")
 
 ## Merge LC and ISA
@@ -79,7 +79,7 @@ GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
 rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 
 ## Landsat EVI and LSWI
-LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/evi_lswi/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
 
 ## Load EVI data for a reference (Fully forested) pixel
 EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 5043),]  

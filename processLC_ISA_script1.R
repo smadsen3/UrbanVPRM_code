@@ -30,7 +30,7 @@ NLCD_CRS = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0
 
 ## Import a LANDSAT file cropped to study domain to define grid and extent of the study area.
 # Project the grid into NLCD projection to subset NLCD data.
-LANDSAT_area =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls_Borden2018_0203_8_2km.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+LANDSAT_area =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 #LANDSAT_area_USA =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 npixel = ncell(LANDSAT_area)
 print(paste0("number of pixels = ",npixel))
@@ -44,10 +44,10 @@ bound_box = spTransform(bound_box, LANDSAT_CRS)
 
 ## Import, reproject, and crop LC and ISA data
 # Land Cover
-LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/IMpermeable_Surface/Impermeable_Surface_Area/aci_2018_on.tif") #Land cover data from the annual crop inventory of Canada over Ontario
+LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/Impermeable_Surface_Area/aci_2018_on.tif") #Land cover data from the annual crop inventory of Canada over Ontario
 #LC_USA = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NLCD/LC/nlcd_2019_land_cover_l48_20210604.img") # Land Cover data from https://www.mrlc.gov/data
-grid_LC = projectRaster(LC_ON,crs=NLCD_CRS) 
-# grid_LC = projectRaster(LC_USA,crs=NLCD_CRS) 
+grid_LC = projectRaster(LC_ON,crs=NLCD_CRS, method='ngb') 
+ # grid_LC = projectRaster(LC_USA,crs=NLCD_CRS) 
 LC_ONcrop = crop(grid_LC,grid_NLCD) #crop(LC,LANDSAT_area)
 extent(LC_ONcrop) = extent(grid_NLCD)
 LClandsat = projectRaster(LC_ONcrop,crs=LANDSAT_CRS)
@@ -55,11 +55,11 @@ LClandsatcrop = crop(LClandsat,LANDSAT_area)
 LClandsatcrop = mask(LClandsatcrop,bound_box)
 
 # ISA ***NEED to decide on dataset used and figure out how to get it in the right format
-ISA_USA = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NLCD/ISA/nlcd_2019_impervious_l48_20210604.img") # Impervious data from https://www.mrlc.gov/data
-
-ISA_USAcrop = crop(ISA_USA,grid_NLCD)
-extent(ISA_USAcrop) = extent(grid_NLCD)
-ISAlandsat = projectRaster(ISA_USAcrop,crs=LANDSAT_CRS,method="ngb")
+ISA_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/ACI_impervious.tif") # Impervious data from https://www.mrlc.gov/data
+grid_ISA = projectRaster(ISA_ON,crs=NLCD_CRS, method='ngb')
+ISA_ONcrop = crop(grid_ISA,grid_NLCD)
+extent(ISA_ONcrop) = extent(grid_NLCD)
+ISAlandsat = projectRaster(ISA_ONcrop,crs=LANDSAT_CRS,method="ngb")
 ISAlandsatcrop = crop(ISAlandsat,LANDSAT_area)
 ISAlandsatcrop = mask(ISAlandsatcrop,bound_box)
 
@@ -69,8 +69,8 @@ lc_resample <- resample(LClandsatcrop, LANDSAT_area, method = 'ngb')
 # ISA
 isa_resample <- resample(ISAlandsatcrop, LANDSAT_area, method = 'ngb')
 
-## Write Rasters
-writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/LC_NIST.tif",
+# Write Rasters
+writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/LC_Borden.tif",
             overwrite=TRUE)
-writeRaster(isa_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_NIST.tif",
+writeRaster(isa_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_Borden.tif",
             overwrite=TRUE)
