@@ -30,11 +30,13 @@ NLCD_CRS = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0
 
 ## Import a LANDSAT file cropped to study domain to define grid and extent of the study area.
 # Project the grid into NLCD projection to subset NLCD data.
-LANDSAT_area =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+LANDSAT_area =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 #LANDSAT_area_USA =  raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/landsat/landsat8/ls0113_8.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 npixel = ncell(LANDSAT_area)
+#npixelUSA=ncell(LANDSAT_area_USA)
 print(paste0("number of pixels = ",npixel))
 grid_NLCD = projectRaster(LANDSAT_area,crs=NLCD_CRS)  
+#grid_NLCD_USA = projectRaster(LANDSAT_area_USA, crs=NLCD-CRS)
 
 ## Import bounding box defining study domain
 #NIST_bound_box = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/shapefiles",layer='NIST_30m_BB') # shapefile data in /urbanVPRM_30m/shapefiles/
@@ -44,11 +46,13 @@ bound_box = spTransform(bound_box, LANDSAT_CRS)
 
 ## Import, reproject, and crop LC and ISA data
 # Land Cover
-LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/Impermeable_Surface_Area/aci_2018_on.tif") #Land cover data from the annual crop inventory of Canada over Ontario
+LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/ACI_LC_to_NLCD_Borden.tif") #Land cover data from the annual crop inventory of Canada over Ontario
 #LC_USA = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NLCD/LC/nlcd_2019_land_cover_l48_20210604.img") # Land Cover data from https://www.mrlc.gov/data
 grid_LC = projectRaster(LC_ON,crs=NLCD_CRS, method='ngb') 
- # grid_LC = projectRaster(LC_USA,crs=NLCD_CRS) 
+#grid_LC_USA = projectRaster(LC_USA,crs=NLCD_CRS) 
+#LC_USAcrop = crop(grid_LC_USA, grid_NLCD_USA)
 LC_ONcrop = crop(grid_LC,grid_NLCD) #crop(LC,LANDSAT_area)
+
 extent(LC_ONcrop) = extent(grid_NLCD)
 LClandsat = projectRaster(LC_ONcrop,crs=LANDSAT_CRS)
 LClandsatcrop = crop(LClandsat,LANDSAT_area)

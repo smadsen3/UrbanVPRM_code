@@ -1,3 +1,4 @@
+memory.limit(size=5e8)
 ## IAN SMITH
 ## iasmith [at] bu.edu
 
@@ -20,6 +21,7 @@ library(ncdf4)
 library(raster)
 library(sp)
 library(parallel)
+library(lubridate)
 
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
