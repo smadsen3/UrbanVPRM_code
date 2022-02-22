@@ -9,7 +9,7 @@
 library("data.table")
 library("raster")
 
-setwd("/projectnb/buultra/iasmith/VPRM_urban/")
+setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files")
 
 ## Model parameters from Mahadevan et al. 2008 & Optimization from Duke Forest
 
