@@ -12,6 +12,7 @@ library("raster")
 library("parallel")
 library("doParallel")
 library("foreach")
+library("ggplot2") #not needed for running just visualizing
 
 ## register cores for parallel processes on computing cluster
 cores = as.numeric(Sys.getenv("NSLOTS"))
@@ -69,16 +70,16 @@ rm(NLCD_ISA,LC.dt,ISA.dt)
 print("LC, ISA loaded!")
 
 
-### NEED TO CHANGE THIS ###
+### NEED TO FIX GREENUP/GREENDOWN NA AND UNPHYSICAL VALUES ###
 
 ## Import Phenology data
 # Growing Season calendar from resampled Multi Source Land Surface Phenology Product product (NASA; https://lpdaac.usgs.gov/products/mslsp30nav001/)
-# 10% EVI increase
-greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
-greenup2 = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/test.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+# 15% EVI increase
+#greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ms_lsp/greenup_Borden.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 
 # 85% EVI decrease
-dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/dormancy.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ms_lsp/dormancy_Borden.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 SoGS.dt = tifdt_fun(greenup,"SOS")
 EoGS.dt = tifdt_fun(dormancy,"EOS")
 GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
