@@ -21,11 +21,11 @@ library(parallel)
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/')
 
 # define study domain, city and year
-xmin = -79.9333-4/240
-xmax = -79.9333+4/240
-ymin =  44.31667-4/240
-ymax =  44.31667+4/240
-city = 'Borden'
+xmin = -80.5577-4/240
+xmax = -80.5577+4/240
+ymin =  42.6353-4/240
+ymax =  42.6353+4/240
+city = 'TPD'
 yr = 2018
 
 
@@ -47,7 +47,7 @@ RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6
 ###############################################################################
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
 

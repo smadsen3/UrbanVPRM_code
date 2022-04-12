@@ -23,7 +23,7 @@ library("lubridate")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 # LANDSAT 8 files
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 ls8 <- list.files()
 for (i in 1:length(ls8)){
   ## read in raster stack
@@ -56,7 +56,7 @@ for (i in 1:length(ls8)){
   #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
   #The line above was trying to use the first column of the file instead of the
   # file name (replacement bellow uses file name)
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],3,6))))
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],12,15))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -64,7 +64,7 @@ for (i in 1:length(ls8)){
 }
 
 # landsat 7
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat7')
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat7')
 ls7 <- list.files()
 for (i in 1:length(ls7)){
   ## read in raster data
@@ -96,20 +96,19 @@ for (i in 1:length(ls7)){
   LSWI.dt = cbind(1:ncell(file[[13]]), LSWI.dt)
   #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
   # Line above did not work, see comment in previous loop
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],3,6))))
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],12,15))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
   assign(paste0('EVI_LSWI',i,'_7.dt'), merge(EVI.dt,LSWI.dt,by=c("Index","x","y")))
 }
 
-## merge daily files into one for all of 2018
+## merge daily files into one for all of 2018 
+## MAKE SURE TO CHANGE FOR EACH SITE (some locations have more/fewer overpasses)
 EVI_LSWI.dt <- rbind(EVI_LSWI1_7.dt,EVI_LSWI2_7.dt,EVI_LSWI3_7.dt,EVI_LSWI4_7.dt,EVI_LSWI5_7.dt,EVI_LSWI6_7.dt,
-                     EVI_LSWI7_7.dt,EVI_LSWI8_7.dt,EVI_LSWI9_7.dt,EVI_LSWI10_7.dt,EVI_LSWI11_7.dt, EVI_LSWI12_7.dt,
-                     EVI_LSWI13_7.dt, EVI_LSWI14_7.dt, 
+                     EVI_LSWI7_7.dt,EVI_LSWI8_7.dt,EVI_LSWI9_7.dt,EVI_LSWI10_7.dt,EVI_LSWI11_7.dt, EVI_LSWI12_7.dt, 
                      EVI_LSWI1_8.dt,EVI_LSWI2_8.dt,EVI_LSWI3_8.dt,EVI_LSWI4_8.dt,EVI_LSWI5_8.dt,EVI_LSWI6_8.dt,
-                     EVI_LSWI7_8.dt,EVI_LSWI8_8.dt,EVI_LSWI9_8.dt,EVI_LSWI10_8.dt,EVI_LSWI11_8.dt,EVI_LSWI12_8.dt,
-                     EVI_LSWI13_8.dt,EVI_LSWI14_8.dt)
+                     EVI_LSWI7_8.dt,EVI_LSWI8_8.dt,EVI_LSWI9_8.dt,EVI_LSWI10_8.dt,EVI_LSWI11_8.dt,EVI_LSWI12_8.dt)
 
 ## order by DOY
 EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
@@ -164,5 +163,5 @@ for(i in unique(inter_evi_lswi$Index)){
 }
 
 # Write Table
-write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/evi_lswi_interpolated_ls7and8.csv',row.names = F,
+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/evi_lswi_interpolated_ls7and8.csv',row.names = F,
             sep=',')

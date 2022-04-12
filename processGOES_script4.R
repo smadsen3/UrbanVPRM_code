@@ -29,11 +29,16 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
-xmin = -79.9333-4/240
-xmax = -79.9333+4/240
-ymin =  44.31667-4/240
-ymax =  44.31667+4/240
-city = 'Borden'
+xmin = -80.5577-4/240
+xmax = -80.5577+4/240
+ymin =  42.6353-4/240
+ymax =  42.6353+4/240
+city = 'TPD'
+#xmin = -80.3574-4/240
+#xmax = -80.3574+4/240
+#ymin =  42.7102-4/240
+#ymax =  42.71027+4/240
+#city = 'TP39'
 yr = 2018
 
 # Set input and create output files directories
@@ -50,7 +55,7 @@ RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -158,7 +163,7 @@ colnames(rap2) = c("Index","x","y","datetime","HoY","tmpC","swRad")
 rap2 <- rap2[,-1]
 
 # import raster used for indexing
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8/ls0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){

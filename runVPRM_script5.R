@@ -1,3 +1,4 @@
+memory.limit(size=5e8)
 ## IAN SMITH
 ## iasmith [at] bu.edu
 
@@ -25,7 +26,7 @@ print(paste0("n. of cores is ",cores))
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
-city = 'Borden'
+city = 'Borden_SOLRIS'
 yr = 2018
 veg_type = 'DBF' #Maybe use Mixed forest instead?
 
@@ -37,8 +38,9 @@ dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/da
 
 ## Define the path to the folder where outputs are saved 
 dir.create(paste0("outputs"), showWarnings = FALSE)
+
 dir.create(paste0("outputs/",city,"/test"), showWarnings = FALSE)
-dir_out = paste0("outputs/",city,"/test")
+dir_out = paste0(city,"/test")
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){
@@ -52,12 +54,12 @@ tifdt_fun = function(raster,name){
 ### LOAD DATA
 ## Land cover and ISA
 ## NEED TO CONVERT LC DATA TO SAME FORMAT AS NLCD DATA
-LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/Landcover/LC_Borden.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/Landcover/LC_Borden.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 LC.dt = tifdt_fun(LC,"LandCover")
 #LC_NIST = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/Landcover/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 #LC_NIST.dt = tifdt_fun(LC_NIST,"LandCover")
 
-NLCD_ISA = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_Borden.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+NLCD_ISA = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/ISA/ISA_Borden.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 ISA.dt = tifdt_fun(NLCD_ISA,"ISA")
 
 ## Merge LC and ISA
@@ -90,6 +92,9 @@ rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
 
 ## Load EVI data for a reference (Fully forested) pixel
+# Borden Pixel = 5043 This is just south of a road, maybe use pixel 6130 to see if it makes a difference (a little further from roads)
+# TP39 Pixel = 5043
+# TPD Pixel = 3440
 EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 5043),]  
 EVI_ref = EVI_ref$EVI_inter
 minEVI_ref = min(EVI_ref)
@@ -125,11 +130,12 @@ for(j in 1:length(blocks)) {
     lim = npixel+1
   }
   
-  if(length(blocks)>1){
-    clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly_block_",sprintf("%08i",as.numeric(block)),".rds")) 
-  } else {
-    clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly.rds"))  
-  }
+  #if(length(blocks)>1){
+  #  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly_block_",sprintf("%08i",as.numeric(block)),".rds")) 
+  #} else {
+  #clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly.rds"))
+  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_Borden_",yr,"_hourly.rds"))
+  #}
   
 
   output.dt = foreach(i=block:(lim-1)) %do% {
@@ -189,7 +195,7 @@ for(j in 1:length(blocks)) {
     saveRDS(output.dt, paste0(dir_out,"/fluxes_",city,"_",yr,"_",veg_type,"_block_",
                               sprintf("%08i",as.numeric(block)),".rds"))
   } else {
-    write.table(output.dt, "vprm_30m_Borden.csv",row.names = F,
+    write.table(output.dt, "vprm_30m_Borden_SOLRIS.csv",row.names = F,
                 sep = ',')
   }
   
@@ -198,5 +204,6 @@ for(j in 1:length(blocks)) {
   rm(output.dt)
 }
 
- cat("\n Done!")
+
+cat("\n Done!")
 
