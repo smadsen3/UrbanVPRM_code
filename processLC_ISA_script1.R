@@ -46,7 +46,7 @@ bound_box = spTransform(bound_box, LANDSAT_CRS)
 
 ## Import, reproject, and crop LC and ISA data
 # Land Cover
-LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/ACI_LC_to_NLCD_Borden.tif") #Land cover data from the annual crop inventory of Canada over Ontario
+LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/ACI_LC_Borden.tif") #Land cover data from the annual crop inventory of Canada over Ontario
 #LC_USA = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NLCD/LC/nlcd_2019_land_cover_l48_20210604.img") # Land Cover data from https://www.mrlc.gov/data
 grid_LC = projectRaster(LC_ON,crs=NLCD_CRS, method='ngb') 
 #grid_LC_USA = projectRaster(LC_USA,crs=NLCD_CRS) 
@@ -74,7 +74,7 @@ lc_resample <- resample(LClandsatcrop, LANDSAT_area, method = 'ngb')
 isa_resample <- resample(ISAlandsatcrop, LANDSAT_area, method = 'ngb')
 
 # Write Rasters
-writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/LC_Borden.tif",
+writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/ACI_LC_Borden.tif",
             overwrite=TRUE)
 writeRaster(isa_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_Borden.tif",
             overwrite=TRUE)

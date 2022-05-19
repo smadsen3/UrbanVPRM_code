@@ -15,7 +15,7 @@ setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 
 ## Land cover types: evergreen, deciduous, mixed, shrublands (open and closed), savannas, (savanna, woody), croplands, grasslands, wetlands, "other"
 
-VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "SOY", "CRP", "GRS", "WET", "OTH", "URB")
+VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CRN", "GRS", "WET", "OTH", "URB")
 ## Optimization sites
 # ENF: NOBS (boreal), NIWOT (montane coniferous), METOLIUS (ponderosa pine)
 # ENF: (tropical): DONALDSON
@@ -32,26 +32,42 @@ VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "SOY", "CRP", "GRS", "WET", "OTH
 
 ### Model's parameters 
 #VPRM_DBF= c(0, 20, 40, 5, 570, 0.127, 0.271, 0.25) # Mahadevan et al. 2008 (Harvard Forest)
-VPRM_DBF= c(0, 30, 40, 5, 863.43378, 0.09355, 0.1379, 1.09) # Winbourne et al. 2021 (Duke Forest)
-VPRM_MXF= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
-VPRM_URB= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
-VPRM_SHB= c(2, 20, 40, 1, 321, 0.122, 0.028, 0.48)
-# USING CORN FOR CRP
-VPRM_SOY= c(5, 22, 40, 2, 2051, 0.064, 0.209, 0.20)
-VPRM_CRP= c(5, 22, 40, 2, 1250, 0.075, 0.173, 0.82)
-VPRM_GRS= c(2, 18, 40, 1, 542, 0.213, 0.028, 0.72)
-VPRM_SVN= c(2, 20, 40, 1, 3241, 0.057, 0.012, 0.58)
-VPRM_WET= c(0, 20, 40, 3, 558, 0.051, 0.081, 0.24)
-# USING NIWOT FOR ENF
-VPRM_ENF= c(0, 20, 40, 1, 446, 0.128, 0.250, 0.17)
-VPRM_OTH= c(0, 0, 0, 0, 0, 0, 0, 0)
+#VPRM_DBF= c(0, 30, 40, 5, 863.43378, 0.09355, 0.1379, 1.09) # Winbourne et al. 2021 (Duke Forest)
+#VPRM_MXF= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
+#VPRM_URB= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
+#VPRM_SHB= c(2, 20, 40, 1, 321, 0.122, 0.028, 0.48)
+## USING CORN FOR CRP
+#VPRM_SOY= c(5, 22, 40, 2, 2051, 0.064, 0.209, 0.20)
+#VPRM_CRP= c(5, 22, 40, 2, 1250, 0.075, 0.173, 0.82)
+#VPRM_GRS= c(2, 18, 40, 1, 542, 0.213, 0.028, 0.72)
+#VPRM_SVN= c(2, 20, 40, 1, 3241, 0.057, 0.012, 0.58)
+#VPRM_WET= c(0, 20, 40, 3, 558, 0.051, 0.081, 0.24)
+## USING NIWOT FOR ENF
+#VPRM_ENF= c(0, 20, 40, 1, 446, 0.128, 0.250, 0.17)
+#VPRM_OTH= c(0, 0, 0, 0, 0, 0, 0, 0)
 
-VPRM_param = rbind(VPRM_ENF, VPRM_DBF, VPRM_MXF, VPRM_SHB, VPRM_SVN, VPRM_SOY, VPRM_CRP, VPRM_GRS, VPRM_WET, VPRM_OTH, VPRM_URB)
+### Model's parameters from Gourdji et al. 2021
+VPRM_DBF= c(0, 45, 23, -15, 0.55, -0.1023, 539, 0.12, 0.065, 0.0024, 4.61, 0.116, -0.0005, 0.0009)
+VPRM_MXF= c(0, 45, 18, 1, 0.05, -0.1097, 506, 0.47, 0.088, 0.0047, 1.39, -0.530, 0.2063,-0.0054)
+VPRM_URB= c(0, 45, 20, 11, 0.1, -0.1273, 673, -6.18, 0.853, -0.0250, 5.19, 1.749, -0.2829, 0.0166) #Used dev-open from Gourdji et al. 2021
+VPRM_SHB= c(0, 45, 17, 5, 0.1, -0.0996, 811, 1.53, 0.004, 0.0049, 0.09, -1.787, 0.4537, -0.0138)
+
+VPRM_CRP= c(0, 45, 26, 7, 0.05, -0.0732, 1019, -1.2, 0.234, -0.006, 3.85, 0.032, -0.0429, 0.0090) #Used Crops, other from Gourdji
+VPRM_CORN= c(0, 45, 35, -1, 0, -0.0997, 1829, -0.02, 0.083, -0.0018, 4.89, 0.150, -0.1324, 0.0156) 
+VPRM_GRS= c(0, 45, 20, 11, 0.1, -0.1273, 673, -6.18, 0.853, -0.0250, 5.19, 1.749, -0.2829, 0.0166)
+VPRM_SVN= c(0, 45, 17, 5, 0.1, -0.0996, 811, 1.53, 0.004, 0.0049, 0.09, -1.787, 0.4537, -0.0138)
+VPRM_WET= c(0, 45, 29, 6, 0.1, -0.1227, 456, -0.82, 0.261, -0.0051, 3.46, -0.777, 0.0990, 0.0018)
+
+VPRM_ENF= c(0, 45, 18, 1, 0.05, -0.1097, 506, 0.47, 0.088, 0.0047, 1.39, -0.530, 0.2063, -0.0054)
+VPRM_OTH= c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+VPRM_param = rbind(VPRM_ENF, VPRM_DBF, VPRM_MXF, VPRM_SHB, VPRM_SVN, VPRM_CRP, VPRM_CORN, VPRM_GRS, VPRM_WET, VPRM_OTH, VPRM_URB)
 VPRM_param = as.data.table(VPRM_param)
 
 ## Units are: T (°C); PAR(umole m-2 s-1); lambda (umole CO2 m-2 s-1/umole PAR m-2 s-1); alpha (umole CO2 m-2 s-1 / 0C); B (umole CO2 m-2 s-1); 
-par_names=c("Tmin", "Topt", "Tmax", "Tlow", "PAR0", "lambda", "alpha", "beta")
-setnames(VPRM_param, paste0("V", 1:8),par_names)
+#par_names=c("Tmin", "Topt", "Tmax", "Tlow", "PAR0", "lambda", "alpha", "beta")
+par_names=c("Tmin", "Tmax", "Topt", "Tcrit", "Tmult", "lambda", "PAR0", "beta", "alpha1", "alpha2", "gam", "theta1", "theta2", "theta3")
+setnames(VPRM_param, paste0("V", 1:14),par_names)
 VPRM_param = cbind(VPRM_LCs, VPRM_param)
 rm(VPRM_CRP,VPRM_DBF,VPRM_ENF,VPRM_GRS,VPRM_MXF,VPRM_OTH,VPRM_SHB,VPRM_SVN,VPRM_URB,VPRM_WET,VPRM_LCs,par_names)
 
@@ -61,12 +77,34 @@ rm(VPRM_CRP,VPRM_DBF,VPRM_ENF,VPRM_GRS,VPRM_MXF,VPRM_OTH,VPRM_SHB,VPRM_SVN,VPRM_
 
 ## Aggregate and translate classes (Here everything is DBF, except water)
 LC_lookup = function(LC,veg_class){
-  if(LC %in% c(11)){
+  if(LC %in% c(11)){ #SHOULD BAREN LAND ALSO BE OTHER??? (0)
     return("OTH")
+  } else if(LC %in% c(42)){
+    return("ENF")
+  } else if(LC %in% c(41)){
+    return("DBF")
+  } else if (LC %in% c(43)){
+    return("MXF")
+  } else if (LC %in% c(52)){
+    return("SHB")
+  } else if (LC %in% c(82)){   
+    return("CRP")
+  
+  #} else if (LC %in% c()){ return("CRN")} 
+  #### EDIT ACI_LC_to_NLCD_LC.R TO DIFFERENTIATE CORN FROM OTHER CROPS ###
+    
+  } else if (LC %in% c(11,81)){
+    return("GRS")
+  } else if (LC %in% c(90,95)){
+    return("WET")
+  } else if (LC %in% c(23)){
+    return("URB")
   } else {
     return(veg_class)
   }
 }
+#"ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CRN", "GRS", "WET", "OTH", "URB"
+
 
 ## Functions to get scale factors
 # Temperature scalar
@@ -124,8 +162,10 @@ getWScale = function(idx,EVI,LSWI){
   LSWI_gsl = LSWI[SOS:EOS]
   
   LSWI_max = max(LSWI_gsl)
+  #LSWI_min = min(LSWI_gsl)
   rm(LSWI_gsl)
   
+  #WScale = (LSWI-LSWI_min)/(LSWI_max-LSWI_min) #WScale from Hu at al. & Gourdji et al. 2021
   WScale = (1+LSWI)/(1+LSWI_max)
   WScale[WScale < 0] = 0 
   WScale[WScale > 1] = 1 # WScale should be always between 0 and 1
@@ -152,21 +192,22 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   ## Get scale factors
   TScale = getTScale(lc,tair)
   PScale = getPScale(idx,EVI)
-  WScale = getWScale(idx,EVI,LSWI)
+  WScale0 = getWScale(idx,EVI,LSWI)
 
   ## Test if EVI causes neg values of GEE
   EVI[EVI<0]=0
   
   ## GEE equation
-  GEE = lmbd * TScale * PScale * WScale * EVI * PAR / (1+PAR/PAR0)
+  GEE = lmbd * TScale * PScale * WScale0 * EVI * PAR / (1+PAR/PAR0)
   
   # Normalize GEE flux so sub-pixel water isn't counted..
   GEE = GEE * (1 - wtr)
   
+  #MAY NEED TO MOVE THIS TO AFTER R EQUATION
   TScale = as.data.frame(as.numeric(TScale))
   PScale = as.data.frame(as.numeric(PScale))
-  WScale = as.data.frame(as.numeric(WScale))
-  PAR = as.data.frame(as.numeric(PAR)) 
+  WScale = as.data.frame(as.numeric(WScale0))
+  PAR2 = as.data.frame(as.numeric(PAR)) 
   
   ## Define the column indicating the pixel ID
   indexcol = rep(idx,time=nrow(time))
@@ -176,15 +217,30 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   ### Get Respiration
   ## Model parameters for Respiration calculation
-  alpha = VPRM_param[VPRM_LCs==lc,alpha]
+  alpha1 = VPRM_param[VPRM_LCs==lc,alpha1]
+  alpha2 = VPRM_param[VPRM_LCs==lc,alpha2]
   beta = VPRM_param[VPRM_LCs==lc,beta]
-  tlow = VPRM_param[VPRM_LCs==lc,Tlow]
+  gam = VPRM_param[VPRM_LCs==lc,gam]
+  theta1 = VPRM_param[VPRM_LCs==lc,theta1]
+  theta2 = VPRM_param[VPRM_LCs==lc,theta2]
+  theta3 = VPRM_param[VPRM_LCs==lc,theta3]
+  
+  Tcrit = VPRM_param[VPRM_LCs==lc, Tcrit]
+  Tmult = VPRM_param[VPRM_LCs==lc, Tmult]
+  #tlow = VPRM_param[VPRM_LCs==lc,Tlow]
   
   ## respiration occurs at rate defined by beta below freezing
-  tair[tair<0] = 0
+  #tair[tair<0] = 0
   
   ## Respiration is a linear function of air temperature
-  Re = (alpha * tair) + beta
+  #Re = (alpha * tair) + beta
+  
+  #Modified air temperature defined by Gourdji et al. 2021 to account for non-zero respiration at low temperatures
+  Tp <- tair
+  Tp[tair<Tcrit] <- Tcrit - Tmult * (Tcrit - tair[tair<Tcrit])
+  
+  #Updated Respiration equation from Gourdji et al. 2021
+  Re = beta + (alpha1 * Tp) + (alpha2 * Tp^2) + (gam * EVI) + (theta1 * WScale0) + (theta2 * WScale0 * Tp) + (theta3 * WScale0 * Tp^2)
   
   ## Partition respiration into heterotrophic and autotrophic respiration
   Ra = 0.5*Re
@@ -211,8 +267,9 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   # Modify total respiration by percentage of water within the pixel
   Re = Re * (1-wtr)
   
+  # MAY NEED TO RE-IMPLEMENT THIS v
   # In Winbourne et al. 2021, minimum ecosystem respiration is set to lowest observed value
-  if(wtr == 0) {Re[which(Re < 1.7795)] <- 1.7795}
+  #if(wtr == 0) {Re[which(Re < 1.7795)] <- 1.7795}
   
   ## Merge all outputs in the same data table 
   result = cbind(result,Re,Ra,Rh,EVI_scale) 

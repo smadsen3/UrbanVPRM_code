@@ -19,11 +19,14 @@ library("sp")
 library("rgdal")
 library("lubridate")
 
-
+#ACI:
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/ACI_unedited_LC_Borden.tif")
+#SOLRIS:
+#LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 # LANDSAT 8 files
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 ls8 <- list.files()
 for (i in 1:length(ls8)){
   ## read in raster stack
@@ -56,7 +59,10 @@ for (i in 1:length(ls8)){
   #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
   #The line above was trying to use the first column of the file instead of the
   # file name (replacement bellow uses file name)
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],12,15))))
+  #TPD:
+  #LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],12,15))))
+  #Borden:
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],3,6))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -64,7 +70,7 @@ for (i in 1:length(ls8)){
 }
 
 # landsat 7
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat7')
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/landsat/landsat7')
 ls7 <- list.files()
 for (i in 1:length(ls7)){
   ## read in raster data
@@ -96,7 +102,10 @@ for (i in 1:length(ls7)){
   LSWI.dt = cbind(1:ncell(file[[13]]), LSWI.dt)
   #LSWI.dt$DOY = yday(ymd(paste0('2018',substr((names(file))[1],3,6))))
   # Line above did not work, see comment in previous loop
-  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],12,15))))
+  #TPD:
+  #LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],12,15))))
+  #Borden:
+  LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls7[i],3,6))))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -106,9 +115,11 @@ for (i in 1:length(ls7)){
 ## merge daily files into one for all of 2018 
 ## MAKE SURE TO CHANGE FOR EACH SITE (some locations have more/fewer overpasses)
 EVI_LSWI.dt <- rbind(EVI_LSWI1_7.dt,EVI_LSWI2_7.dt,EVI_LSWI3_7.dt,EVI_LSWI4_7.dt,EVI_LSWI5_7.dt,EVI_LSWI6_7.dt,
-                     EVI_LSWI7_7.dt,EVI_LSWI8_7.dt,EVI_LSWI9_7.dt,EVI_LSWI10_7.dt,EVI_LSWI11_7.dt, EVI_LSWI12_7.dt, 
+                     EVI_LSWI7_7.dt,EVI_LSWI8_7.dt,EVI_LSWI9_7.dt,EVI_LSWI10_7.dt,EVI_LSWI11_7.dt, EVI_LSWI12_7.dt,
+                     EVI_LSWI13_7.dt,EVI_LSWI14_7.dt,
                      EVI_LSWI1_8.dt,EVI_LSWI2_8.dt,EVI_LSWI3_8.dt,EVI_LSWI4_8.dt,EVI_LSWI5_8.dt,EVI_LSWI6_8.dt,
-                     EVI_LSWI7_8.dt,EVI_LSWI8_8.dt,EVI_LSWI9_8.dt,EVI_LSWI10_8.dt,EVI_LSWI11_8.dt,EVI_LSWI12_8.dt)
+                     EVI_LSWI7_8.dt,EVI_LSWI8_8.dt,EVI_LSWI9_8.dt,EVI_LSWI10_8.dt,EVI_LSWI11_8.dt,EVI_LSWI12_8.dt,
+                     EVI_LSWI13_8.dt,EVI_LSWI14_8.dt)
 
 ## order by DOY
 EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
@@ -150,6 +161,139 @@ for(i in unique(inter_evi_lswi$Index)){
   print(round(i/npixel*100, 1))
 }
 
+#inter_evi_lswi$EVI_inter2 <- NA
+
+
+#for(i in 1:length(inter_evi_lswi$Index)){
+#  #if(inter_evi_lswi$DOY[i]<50 
+#  #  & length(inter_evi_lswi[which(inter_evi_lswi$Index == inter_evi_lswi$Index[i]
+#  #                                 & inter_evi_lswi$DOY<inter_evi_lswi$DOY[i]+50 
+#  #                                 & inter_evi_lswi$DOY>0 
+#  #                                 & is.finite(inter_evi_lswi$EVI)),'EVI']) >= 1){
+#  #    inter_evi_lswi$EVI_inter2[i] <-inter_evi_lswi$EVI_inter[i]
+#  #  }
+#  #else if(inter_evi_lswi$DOY[i]>315 
+#  #        & length(inter_evi_lswi[which(inter_evi_lswi$Index == inter_evi_lswi$Index[i]
+#  #                                      & inter_evi_lswi$DOY>inter_evi_lswi$DOY[i]-50 
+#  #                                      & inter_evi_lswi$DOY<366 
+#  #                                      & is.finite(inter_evi_lswi$EVI)),'EVI']) >= 1){
+#  #  inter_evi_lswi$EVI_inter2[i] <-inter_evi_lswi$EVI_inter[i]
+#  #}
+#  #else 
+#  if(inter_evi_lswi$DOY[i]==130){
+#    if(length(inter_evi_lswi[which(inter_evi_lswi$Index == inter_evi_lswi$Index[i]
+#                                       & inter_evi_lswi$DOY>115 
+#                                       & inter_evi_lswi$DOY<145 
+#                                       & is.finite(inter_evi_lswi$EVI)),'EVI']) >= 1){
+#      inter_evi_lswi$EVI_inter2[i]<-inter_evi_lswi$EVI_inter[i]
+#    }else if(is.na(LC_dat[inter_evi_lswi$Index[i]])==FALSE){
+#      evi_ind<-which(values(LC_dat)[inter_evi_lswi$Index] == values(LC_dat)[inter_evi_lswi$Index[i]]
+#                             & is.finite(inter_evi_lswi$EVI_inter)
+#                             & ((inter_evi_lswi$x-inter_evi_lswi$x[i])^2+(inter_evi_lswi$y-inter_evi_lswi$y[i])^2)^(1/2)<400) #300 or 400m seems about good
+#                             #& inter_evi_lswi$x<inter_evi_lswi$x[i]+30
+#                             #& inter_evi_lswi$y<inter_evi_lswi$y[i]+50
+#                             #& inter_evi_lswi$x>inter_evi_lswi$x[i]-30
+#                             #& inter_evi_lswi$y>inter_evi_lswi$y[i]-50)
+#      evi_vals<-inter_evi_lswi$EVI_inter[evi_ind]
+#      evi_x<-inter_evi_lswi$x[evi_ind]
+#      evi_y<-inter_evi_lswi$y[evi_ind]
+#      #inter_evi_lswi$EVI_inter2[i]<-mean(evi_vals)
+#      # Take a weighted mean based on the distance of the data from the pixel
+#      inter_evi_lswi$EVI_inter2[i]<-weighted.mean(evi_vals, weight=1/(((evi_x-inter_evi_lswi$x[i])^2 + (evi_y-inter_evi_lswi$y[i])^2)^(1/2)))
+#    }
+#    #if (length(x.stk)==0){
+#    #  x.stk <- inter_evi_lswi$x[i] 
+#    #  y.stk <- inter_evi_lswi$y[i]
+#    #  Date.stk <- inter_evi_lswi$DOY[i]
+#    #  evi.stk <- inter_evi_lswi$EVI_inter[i]
+#    #  evi2.stk <- inter_evi_lswi$EVI_inter2[i]
+#    #  Index.stk<-inter_evi_lswi$Index[i]
+#    #} else {
+#    #  x.stk <- append(x.stk, inter_evi_lswi$x[i])
+#    #  y.stk <- append(y.stk, inter_evi_lswi$y[i])
+#    #  Date.stk <- append(Date.stk, inter_evi_lswi$DOY[i])
+#    #  evi.stk <- append(evi.stk, inter_evi_lswi$EVI_inter[i])
+#    #  evi2.stk <- append(evi2.stk, inter_evi_lswi$EVI_inter2[i])
+#    #  Index.stk <-append(Index.stk,inter_evi_lswi$Index[i])
+#    #  LC.stk <- append(LC.stk,LC_dat[inter_evi_lswi$Index[i]])
+#    #}
+#    print(round(inter_evi_lswi$Index[i], 1))
+#  }
+#}
+
+#Index.stk<-NULL
+#x.stk<-NULL
+#y.stk<-NULL
+#Date.stk<-NULL
+#evi.stk<-NULL
+#evi2.stk<-NULL
+#LC.stk <- NULL
+
+#for (I in 1:length(inter_evi_lswi$Index)){
+#  if (130 == inter_evi_lswi$DOY[I]){ #} & inter_evi_lswi$DOY[I] < 150){ #this makes it so you only get the first day
+#    if (length(x.stk)==0){
+#      x.stk <- inter_evi_lswi$x[I] 
+#      y.stk <- inter_evi_lswi$y[I]
+#      Date.stk <- inter_evi_lswi$DOY[I]
+#      evi.stk <- inter_evi_lswi$EVI_inter[I]
+#      evi2.stk <- inter_evi_lswi$EVI_inter2[I]
+#      Index.stk<-inter_evi_lswi$Index[I]
+#      LC.stk<-LC_dat[inter_evi_lswi$Index[I]]
+#    } else {
+#      x.stk <- append(x.stk, inter_evi_lswi$x[I])
+#      y.stk <- append(y.stk, inter_evi_lswi$y[I])
+#      Date.stk <- append(Date.stk, inter_evi_lswi$DOY[I])
+#      evi.stk <- append(evi.stk, inter_evi_lswi$EVI_inter[I])
+#      evi2.stk <- append(evi2.stk, inter_evi_lswi$EVI_inter2[I])
+#      Index.stk <-append(Index.stk,inter_evi_lswi$Index[I])
+#      LC.stk <- append(LC.stk,LC_dat[inter_evi_lswi$Index[I]])
+#    }
+#    print(inter_evi_lswi$Index[I])
+#  }
+#}
+
+#All.data.evi <- data.frame(
+#  Index = Index.stk[1:length(LC.stk)],
+#  x = x.stk[1:length(LC.stk)], 
+#  y = y.stk[1:length(LC.stk)],
+#  EVI_inter =evi.stk[1:length(LC.stk)],
+#  EVI_inter2 =evi2.stk[1:length(LC.stk)],
+#  LC = LC.stk[1:length(LC.stk)],
+#  stringsAsFactors = FALSE
+#)
+
+#All.data.evi$EVI_inter2[which(is.na(All.data.evi$EVI_inter2))]<-All.data.evi$EVI_inter[which(is.na(All.data.evi$EVI_inter2))]
+#All.data.evi$EVI_inter2[which(All.data.evi$EVI_inter2<0)]<-All.data.evi$EVI_inter[which(All.data.evi$EVI_inter2<0)]
+
+#sincrs <- '+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+
+#s <- SpatialPoints(cbind(All.data.evi$x, All.data.evi$y), proj4string=CRS(sincrs))
+
+#lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+#coords <- spTransform(s, lonlat)
+
+#EVI_xy_data<-cbind(as.data.frame(coords), All.data.evi$EVI_inter, All.data.evi$EVI_inter2, All.data.evi$Index)
+
+#library("ggplot2")
+#ggplot(EVI_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$EVI_inter)) + ggtitle('Borden Interpolated EVI (DOY = 130)') +coord_equal()
+
+#ggplot(EVI_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$EVI_inter2)) + ggtitle('Borden Interpolated EVI V2 (DOY = 130), 400') +coord_equal()
+
+#ggplot(EVI_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$LC)) + ggtitle('Borden Land Cover (DOY = 130)') +coord_equal()
+
 # Interpolate daily LSWI values for each pixel
 inter_evi_lswi$LSWI_inter <- NA
 
@@ -162,6 +306,78 @@ for(i in unique(inter_evi_lswi$Index)){
   print(round(i/npixel*100, 1))
 }
 
+#inter_evi_lswi$LSWI_inter2 <- NA
+#for(i in 1:length(inter_evi_lswi$Index)){
+#  if(inter_evi_lswi$DOY[i]==130){
+#    if(length(inter_evi_lswi[which(inter_evi_lswi$Index == inter_evi_lswi$Index[i]
+#                                   & inter_evi_lswi$DOY>115 
+#                                   & inter_evi_lswi$DOY<145 
+#                                   & is.finite(inter_evi_lswi$LSWI)),'LSWI']) >= 1){
+#      inter_evi_lswi$LSWI_inter2[i]<-inter_evi_lswi$LSWI_inter[i]
+#    }else if(is.na(LC_dat[inter_evi_lswi$Index[i]])==FALSE){
+#      lswi_vals<-inter_evi_lswi$LSWI_inter[which(values(LC_dat) == values(LC_dat)[inter_evi_lswi$Index[i]]
+#                                               & is.finite(inter_evi_lswi$LSWI_inter)
+#                                               & inter_evi_lswi$x<inter_evi_lswi$x[i]+200 
+#                                               & inter_evi_lswi$y<inter_evi_lswi$y[i]+200
+#                                               & inter_evi_lswi$x>inter_evi_lswi$x[i]-200
+#                                               & inter_evi_lswi$y>inter_evi_lswi$y[i]-200)]
+#      inter_evi_lswi$LSWI_inter2[i]<-mean(lswi_vals)
+#    }
+#  }
+#  print(round(inter_evi_lswi$Index[i], 1))
+#}
+
+
+#lswi.stk<-NULL
+#lswi2.stk<-NULL
+
+#for (I in 1:length(inter_evi_lswi$Index)){
+#  if (130 == inter_evi_lswi$DOY[I]){ #} & inter_evi_lswi$DOY[I] < 150){ #this makes it so you only get the first day
+#    if (length(lswi.stk)==0){
+#      lswi.stk <- inter_evi_lswi$LSWI_inter[I]
+#      lswi2.stk <- inter_evi_lswi$LSWI_inter2[I]
+#    } else {
+#      lswi.stk <- append(lswi.stk, inter_evi_lswi$LSWI_inter[I])
+#      lswi2.stk <- append(lswi2.stk, inter_evi_lswi$LSWI_inter2[I])
+#    }
+#  }
+#}
+
+#All.data.evi <- data.frame(
+#  Index = Index.stk[1:length(LC.stk)],
+#  x = x.stk[1:length(LC.stk)], 
+#  y = y.stk[1:length(LC.stk)],
+#  EVI_inter =evi.stk[1:length(LC.stk)],
+#  EVI_inter2 =evi2.stk[1:length(LC.stk)],
+#  LSWI_inter =lswi.stk[1:length(LC.stk)],
+#  LSWI_inter2 =lswi2.stk[1:length(LC.stk)],
+#  LC = LC.stk[1:length(LC.stk)],
+#  stringsAsFactors = FALSE
+#)
+
+#EVI_xy_data<-cbind(as.data.frame(coords), All.data.evi$EVI_inter, All.data.evi$EVI_inter2, All.data.evi$LSWI_inter, All.data.evi$LSWI_inter2, All.data.evi$Index)
+
+#ggplot(EVI_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$LSWI_inter)) + ggtitle('Borden Interpolated LSWI (DOY = 130)') +coord_equal()
+
+#ggplot(EVI_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$LSWI_inter2)) + ggtitle('Borden Interpolated LSWI V2 (DOY = 130)') +coord_equal()
+
+
+#inter_evi_lswi$EVI_inter[is.na(inter_evi_lswi$EVI_inter2)==FALSE]<-inter_evi_lswi$EVI_inter2[is.na(inter_evi_lswi$EVI_inter2)==FALSE]
+#inter_evi_lswi$LSWI_inter[is.na(inter_evi_lswi$LSWI_inter2)==FALSE]<-inter_evi_lswi$LSWI_inter2[is.na(inter_evi_lswi$LSWI_inter2)==FALSE]
+
+#inter_evi_lswi %>% select(-EVI_inter2)
+#inter_evi_lswi %>% select(-LSWI_inter2)
+
+#inter_evi_lswi
+
 # Write Table
-write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/evi_lswi_interpolated_ls7and8.csv',row.names = F,
+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/adjusted_evi_lswi_interpolated_ls7and8.csv',row.names = F,
             sep=',')
