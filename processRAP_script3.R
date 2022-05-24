@@ -21,13 +21,20 @@ library(parallel)
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/')
 
 # define study domain, city and year
-xmin = -80.5577-4/240
-xmax = -80.5577+4/240
-ymin =  42.6353-4/240
-ymax =  42.6353+4/240
-city = 'TPD'
-yr = 2018
+xmin = -79.9333-4/240
+xmax = -79.9333+4/240
+ymin = 44.3167-4/240
+ymax = 44.3167+4/240
+city = 'Borden_500m'
 
+#xmin = -80.5577-4/240
+#xmax = -80.5577+4/240
+#ymin =  42.6353-4/240
+#ymax =  42.6353+4/240
+#city = "TPD"
+
+yr = 2018
+ 
 
 # Set/Create file directories
 inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/origTIFF/')
@@ -43,24 +50,30 @@ setkey(times,chr)
 # CRS list
 LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
 RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6371229 +b=6371229 +units=m +no_defs"
-
+MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 ###############################################################################
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-values(ls) <- 1
-ls.spdf <- as(ls,'SpatialPointsDataFrame')
+#ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/LandCover/MODIS_LC_Borden_500m.tif')
+values(md) <- 1
+#values(ls) <- 1
+md.spdf <- as(md, 'SpatialPointsDataFrame')
+#ls.spdf <- as(ls,'SpatialPointsDataFrame')
 
 # Create slightly larger bounding box to crop to (avoids dropped pixels at edge when reprojecting / resampling)
 bbox <- extent(xmin,xmax,ymin,ymax)
 buff=0.05
 bbox.extra <- extent(xmin - buff, xmax + buff, ymin - buff, ymax + buff)
 
+
 # Create extended bounding box raster in Landsat projection 
 gridXY = as(raster::extent(bbox.extra), "SpatialPolygons")
 proj4string(gridXY) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 dom.bbextra <- as(gridXY,'SpatialPolygonsDataFrame')
-RAP.XY <- projectRaster(raster(gridXY),crs=LANDSAT_CRS)
+RAP.XY <- projectRaster(raster(gridXY),crs=MODIS_CRS)
+#RAP.XY<-raster(gridXY,crs=crs(md),res=res(md))
+#res(RAP.XY)<-res(md)
 
 # Obtain correct extent for RAP files from one of the raw RAP grib2 data files
 rl.grb <- list.files(path=rapDIR,recursive='TRUE',pattern='.grb2') # rap data downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
@@ -70,23 +83,37 @@ RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1]))) #DOESN'T UNDERSTAND PROJECTI
 # Create file list of converted RAP .tif data files to crop and project 
 rl <- list.files(path=inDIR,pattern='rap') #need to create tif files for rap data
 
+## function to extract RAP data for study domain
+#rap2landsat <- function(dir,file,domain){
+#  print(paste0("Processing file ",file))
+#  m <- copy(ls)
+#  rs <- raster(paste0(dir,file))
+#  extent(rs) = RAP_EXT
+#  rs <- projectRaster(rs, crs = crs(ls))
+#  rap.crop <- crop(rs,extent(RAP.XY))
+#  vals <- extract(rap.crop,ls.spdf)
+#  values(m) <- vals
+#  y <- list(m)
+#  return(y)
+#}
+
 # function to extract RAP data for study domain
-rap2landsat <- function(dir,file,domain){
+rap2modis <- function(dir,file,domain){
   print(paste0("Processing file ",file))
-  m <- copy(ls)
+  m <- copy(md)
   rs <- raster(paste0(dir,file))
   extent(rs) = RAP_EXT
-  rs <- projectRaster(rs, crs = crs(ls))
+  rs <- projectRaster(rs, RAP.XY)
   rap.crop <- crop(rs,extent(RAP.XY))
-  vals <- extract(rap.crop,ls.spdf)
+  vals <- extract(rap.crop,md.spdf)
   values(m) <- vals
   y <- list(m)
   return(y)
 }
 
 # run function
-outlist <- mcmapply(rap2landsat, dir=inDIR, file=rl, domain=city, mc.cores=1)
-rm(ls,ls.spdf,RAP.XY,RAP_EXT)
+outlist <- mcmapply(rap2modis, dir=inDIR, file=rl, domain=city, mc.cores=1)
+rm(md,md.spdf,RAP.XY,RAP_EXT)
 
 # Compile all cropped and reprojected hourly rasters into single "long" data.table
 cnames <- paste0(substr(rl,9,16), substr(rl,18,19))

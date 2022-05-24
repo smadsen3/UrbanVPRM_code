@@ -77,27 +77,29 @@ rm(VPRM_CRP,VPRM_DBF,VPRM_ENF,VPRM_GRS,VPRM_MXF,VPRM_OTH,VPRM_SHB,VPRM_SVN,VPRM_
 
 ## Aggregate and translate classes (Here everything is DBF, except water)
 LC_lookup = function(LC,veg_class){
-  if(LC %in% c(11)){ #SHOULD BAREN LAND ALSO BE OTHER??? (0)
+  if(LC %in% c(17)){ #SHOULD BAREN LAND ALSO BE OTHER??? (0)
     return("OTH")
-  } else if(LC %in% c(42)){
+  } else if(LC %in% c(1)){
     return("ENF")
-  } else if(LC %in% c(41)){
+  } else if(LC %in% c(4)){
     return("DBF")
-  } else if (LC %in% c(43)){
+  } else if (LC %in% c(3,5)){
     return("MXF")
-  } else if (LC %in% c(52)){
+  } else if (LC %in% c(6,7)){
     return("SHB")
-  } else if (LC %in% c(82)){   
+  } else if (LC %in% c(8,9)){
+    return("SVN")
+  } else if (LC %in% c(10)){
+    return("GRS")
+  } else if (LC %in% c(11)){
+    return("WET")
+  } else if (LC %in% c(12,14)){   
     return("CRP")
   
   #} else if (LC %in% c()){ return("CRN")} 
   #### EDIT ACI_LC_to_NLCD_LC.R TO DIFFERENTIATE CORN FROM OTHER CROPS ###
     
-  } else if (LC %in% c(11,81)){
-    return("GRS")
-  } else if (LC %in% c(90,95)){
-    return("WET")
-  } else if (LC %in% c(23)){
+  } else if (LC %in% c(13,16)){
     return("URB")
   } else {
     return(veg_class)

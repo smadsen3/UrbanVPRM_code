@@ -1,3 +1,8 @@
+
+
+## FOR SOME REASON THERE ARE NA VALUES IN PAR (SWRAD) THIS IS CAUSING ISSUES ##
+
+
 memory.limit(size=5e8)
 ## IAN SMITH
 ## iasmith [at] bu.edu
@@ -26,7 +31,7 @@ print(paste0("n. of cores is ",cores))
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
-city = 'TPD_SOLRIS_updated_R'
+city = 'Borden_500m'
 yr = 2018
 veg_type = 'DBF' #Maybe use Mixed forest instead?
 
@@ -34,7 +39,7 @@ veg_type = 'DBF' #Maybe use Mixed forest instead?
 nrow_block=17000
 
 # Climate data folder
-dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/2018') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
+dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/2018') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
 
 ## Define the path to the folder where outputs are saved 
 dir.create(paste0("outputs"), showWarnings = FALSE)
@@ -54,20 +59,28 @@ tifdt_fun = function(raster,name){
 ### LOAD DATA
 ## Land cover and ISA
 ## NEED TO CONVERT LC DATA TO SAME FORMAT AS NLCD DATA
-LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_SOLRIS/Landcover/LC_TPD.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/LandCover/MODIS_LC_Borden_500m.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 LC.dt = tifdt_fun(LC,"LandCover")
 #LC_NIST = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/Landcover/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 #LC_NIST.dt = tifdt_fun(LC_NIST,"LandCover")
 
-ISA_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_SOLRIS/ISA/ISA_TPD.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+ISA_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/ISA/ISA_Borden_500m.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 ISA.dt = tifdt_fun(ISA_dat,"ISA")
 
 ## Merge LC and ISA
-LC_ISA.dt = merge(LC.dt,ISA.dt,by=c("Index","x","y"))
+#LC_ISA.dt = merge(LC.dt,ISA.dt,by=c("Index","x","y")) 
+#for some reason y is off by 1*10^-9 so it won't merge do it manually below:
+LC_ISA.dt = merge(LC.dt,ISA.dt,by=c("Index","x"))
+LC_ISA.test<-LC_ISA.dt[,1:2]
+LC_ISA.test$y<-LC_ISA.dt$y.x
+LC_ISA.test$LandCover<-LC_ISA.dt$LandCover
+LC_ISA.test$ISA<-LC_ISA.dt$ISA
+
+LC_ISA.dt<-LC_ISA.test
 npixel = as.numeric(nrow(LC_ISA.dt))
 
 print(paste0("n. of pixels is ",npixel))
-rm(ISA_dat,LC.dt,ISA.dt)
+rm(ISA_dat,LC.dt,ISA.dt,LC_ISA.test)
 
 print("LC, ISA loaded!")
 
@@ -78,10 +91,11 @@ print("LC, ISA loaded!")
 # Growing Season calendar from resampled Multi Source Land Surface Phenology Product product (NASA; https://lpdaac.usgs.gov/products/mslsp30nav001/)
 # 15% EVI increase
 #greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
-greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/ms_lsp/greenup_TPD.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+
+greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 
 # 85% EVI decrease
-dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/ms_lsp/dormancy_TPD.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_Dormancy.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 SoGS.dt = tifdt_fun(greenup,"SOS")
 EoGS.dt = tifdt_fun(dormancy,"EOS")
 GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
@@ -89,13 +103,98 @@ GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
 rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 
 ## Landsat EVI and LSWI
-LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/evi_lswi_interpolated_ls7and8.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/adjusted_evi_lswi_interpolated_modis.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+
+
+#Uncomment below to visualize below
+#x.stk<-NULL
+#y.stk<-NULL
+#Date.stk <- NULL
+#EVI.stk <- NULL
+#EVI_inter.stk<-NULL
+#Index.stk<-NULL
+#LSWI.stk<-NULL
+#LSWI_inter.stk<-NULL
+#LC.stk<-NULL
+
+#for (I in 1:length(LS_VI.dt$Index)){
+#  if (148<LS_VI.dt$DOY[I] & LS_VI.dt$DOY[I]<150){
+#    if (length(x.stk)==0){
+#      x.stk <- LS_VI.dt$x[I] 
+#      y.stk <- LS_VI.dt$y[I]
+#      Date.stk <- LS_VI.dt$DOY[I]
+#      EVI.stk <- LS_VI.dt$EVI[I]
+#      EVI_inter.stk <- LS_VI.dt$EVI_inter[I]
+#      Index.stk<-LS_VI.dt$Index[I]
+#      LSWI.stk <- LS_VI.dt$LSWI[I]
+#      LSWI_inter.stk<-LS_VI.dt$LSWI_inter[I]
+#      LC.stk<-LC_ISA.dt$LandCover[LS_VI.dt$Index[I]]
+#    } else {
+#      x.stk <- append(x.stk, LS_VI.dt$x[I])
+#      y.stk <- append(y.stk, LS_VI.dt$y[I])
+#      Date.stk <- append(Date.stk, LS_VI.dt$DOY[I])
+#      EVI.stk <-append(EVI.stk, LS_VI.dt$EVI[I])
+#      EVI_inter.stk <- append(EVI_inter.stk, LS_VI.dt$EVI_inter[I])
+#      Index.stk <-append(Index.stk,LS_VI.dt$Index[I])
+#      LSWI.stk <- append(LSWI.stk,LS_VI.dt$LSWI[I])
+#      LSWI_inter.stk <- append(LSWI_inter.stk,LS_VI.dt$LSWI_inter[I])
+#      LC.stk<-append(LC.stk,LC_ISA.dt$LandCover[LS_VI.dt$Index[I]])
+#    }
+#  }
+#}
+
+#All.data.evi <- data.frame(
+#  Index = Index.stk[-length(x.stk)],
+#  x = x.stk[-length(x.stk)], 
+#  y = y.stk[-length(x.stk)],
+#  EVI =EVI.stk[-length(x.stk)],
+#  LSWI = LSWI.stk[-length(x.stk)],
+#  EVI_inter =EVI_inter.stk[-length(x.stk)],
+#  LSWI_inter = LSWI_inter.stk[-length(x.stk)],
+#  LC = LC.stk[-length(x.stk)],
+#  stringsAsFactors = FALSE
+#)
+
+#modcrs<-'+proj=longlat +datum=WGS84 +no_defs'
+#s <- SpatialPoints(cbind(All.data.evi$x, All.data.evi$y), proj4string=CRS(modcrs))
+
+#lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+#coords <- spTransform(s, lonlat)
+#evi_xy_data<-cbind(as.data.frame(coords), All.data.evi$EVI,All.data.evi$LSWI,All.data.evi$EVI_inter, All.data.evi$LSWI_inter, All.data.evi$LC)
+
+#s2 <- SpatialPoints(cbind(All.data.evi$x[98],All.data.evi$y[98]), proj4string=CRS(modcrs))
+#coords2 <- spTransform(s2, lonlat)
+
+#Fpix=as.data.frame(coords2) #forested pixel (index=98)
+
+#s3 <- SpatialPoints(cbind(-79.9333,44.3167), proj4string=CRS(modcrs))
+#coords3 <- spTransform(s3, lonlat)
+
+#B=as.data.frame(coords3) #fluxtower location
+
+#ggplot(evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=1/240,
+#           height=1/240)) + geom_tile(aes(fill=All.data.evi$LC)) + geom_point(data=Fpix,colour = 'red') + geom_point(data=B,colour = 'green') + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Land Cover')
+
+
+#ggplot(evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=1/240,
+#           height=1/240)) + geom_tile(aes(fill=All.data.evi$EVI_inter)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Interpolated EVI (DOY = 142-150)')
+
+#ggplot(evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$LSWI_inter)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Interpolated LSWI (DOY = 142-150)')
+
+
+
+
 
 ## Load EVI data for a reference (Fully forested) pixel
-# Borden Pixel = 5043 This is just south of a road, maybe use pixel 6130 to see if it makes a difference (a little further from roads)
-# TP39 Pixel = 5043
-# TPD Pixel = 3440
-EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 3440),]  
+# Borden Pixel = 98 This is just south of a road, maybe use pixel 6130 to see if it makes a difference (a little further from roads)
+# TP39 Pixel = ?
+# TPD Pixel = ?
+EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 98),]  
 EVI_ref = EVI_ref$EVI_inter
 minEVI_ref = min(EVI_ref)
 EVI_ref = rep(EVI_ref,each=24)
@@ -134,7 +233,7 @@ for(j in 1:length(blocks)) {
   #  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly_block_",sprintf("%08i",as.numeric(block)),".rds")) 
   #} else {
   #clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly.rds"))
-  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_TPD_",yr,"_hourly.rds"))
+  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_Borden_500m_",yr,"_hourly.rds"))
   #}
   
 
@@ -195,7 +294,7 @@ for(j in 1:length(blocks)) {
     saveRDS(output.dt, paste0(dir_out,"/fluxes_",city,"_",yr,"_",veg_type,"_block_",
                               sprintf("%08i",as.numeric(block)),".rds"))
   } else {
-    write.table(output.dt, "vprm_30m_SOLRIS_TPD_updated_R.csv",row.names = F,
+    write.table(output.dt, "vprm_500m_Borden_updated_R.csv",row.names = F,
                 sep = ',')
   }
   

@@ -29,11 +29,16 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
-xmin = -80.5577-4/240
-xmax = -80.5577+4/240
-ymin =  42.6353-4/240
-ymax =  42.6353+4/240
-city = 'TPD'
+xmin = -79.9333-4/240
+xmax = -79.9333+4/240
+ymin = 44.3167-4/240
+ymax = 44.3167+4/240
+city = 'Borden_500m'
+#xmin = -80.5577-4/240
+#xmax = -80.5577+4/240
+#ymin =  42.6353-4/240
+#ymax =  42.6353+4/240
+#city = 'TPD'
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
@@ -50,12 +55,14 @@ times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM
 setkey(times,chr)
 
 # CRS list
-LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+#LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
 RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6371229 +b=6371229 +units=m +no_defs"
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
+MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+#ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/LandCover/MODIS_LC_Borden_500m.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -76,13 +83,27 @@ print("done! 1")
 rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
 
 # function to extract GOES data for study domain
-goes2landsat <- function(dir,file){
+#goes2landsat <- function(dir,file){
+#  if(file.exists(paste0(dir,file))){
+#    print(paste0("Processing file ",file))
+#    m <- copy(ls)  
+#    rs <- raster(paste0(dir,file), varname = 'ssi')
+#    goes.crop <- crop(rs,extent(GOES.XY))
+#    goes.proj <- projectRaster(goes.crop,crs=LANDSAT_CRS)
+#    vals <- extract(goes.proj,ls.spdf)
+#    values(m) <- vals
+#    y <- list(m)
+#    return(y)
+#  }
+#}
+
+goes2modis <- function(dir,file){
   if(file.exists(paste0(dir,file))){
     print(paste0("Processing file ",file))
     m <- copy(ls)  
     rs <- raster(paste0(dir,file), varname = 'ssi')
     goes.crop <- crop(rs,extent(GOES.XY))
-    goes.proj <- projectRaster(goes.crop,crs=LANDSAT_CRS)
+    goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
     vals <- extract(goes.proj,ls.spdf)
     values(m) <- vals
     y <- list(m)
@@ -93,7 +114,7 @@ goes2landsat <- function(dir,file){
 print("done! 2")
 
 # run function
-outlist <- mcmapply(goes2landsat, dir=inDIR, file=rl, mc.cores=1)  
+outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
 rm(ls,ls.spdf,GOES.XY)
 
 # Compile all cropped and reprojected hourly rasters into single "long" data.table
@@ -163,7 +184,9 @@ colnames(rap2) = c("Index","x","y","datetime","HoY","tmpC","swRad")
 rap2 <- rap2[,-1]
 
 # import raster used for indexing
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+#ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m/LandCover/MODIS_LC_Borden_500m.tif')
+
 
 ## Function to convert tif into a datatable..
 tifdt_fun = function(raster,name){
