@@ -15,7 +15,7 @@ setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 
 ## Land cover types: evergreen, deciduous, mixed, shrublands (open and closed), savannas, (savanna, woody), croplands, grasslands, wetlands, "other"
 
-VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CRN", "GRS", "WET", "OTH", "URB")
+VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CORN", "GRS", "WET", "OTH", "URB")
 ## Optimization sites
 # ENF: NOBS (boreal), NIWOT (montane coniferous), METOLIUS (ponderosa pine)
 # ENF: (tropical): DONALDSON
@@ -76,36 +76,39 @@ rm(VPRM_CRP,VPRM_DBF,VPRM_ENF,VPRM_GRS,VPRM_MXF,VPRM_OTH,VPRM_SHB,VPRM_SVN,VPRM_
 
 
 ## Aggregate and translate classes (Here everything is DBF, except water)
-LC_lookup = function(LC,veg_class){
+LC_lookup = function(LC,C4,veg_class){
   if(LC %in% c(17)){ #SHOULD BAREN LAND ALSO BE OTHER??? (0)
     return("OTH")
   } else if(LC %in% c(1)){
     return("ENF")
   } else if(LC %in% c(4)){
     return("DBF")
-  } else if (LC %in% c(3,5)){
+  } else if (LC %in% c(3,5)){ #3= Deciduous needleleaf #5= Mixed forest
     return("MXF")
-  } else if (LC %in% c(6,7)){
+  } else if (LC %in% c(6,7)){ #6=closed, 7=open shrubland
     return("SHB")
-  } else if (LC %in% c(8,9)){
+  } else if (LC %in% c(8,9)){ #8=woody savannas, 9=savannas
     return("SVN")
   } else if (LC %in% c(10)){
     return("GRS")
   } else if (LC %in% c(11)){
     return("WET")
-  } else if (LC %in% c(12,14)){   
-    return("CRP")
-  
+  } else if (LC %in% c(12,14)){  #12=cropland 14=cropland/natural vegetation mosaics 
+    if (C4 > 0.5){
+      return("CORN")
+    } else{
+      return("CRP")
+    }
   #} else if (LC %in% c()){ return("CRN")} 
   #### EDIT ACI_LC_to_NLCD_LC.R TO DIFFERENTIATE CORN FROM OTHER CROPS ###
     
-  } else if (LC %in% c(13,16)){
+  } else if (LC %in% c(13,16)){ #13=Urban/built-up lands, 16=Barren
     return("URB")
   } else {
     return(veg_class)
   }
 }
-#"ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CRN", "GRS", "WET", "OTH", "URB"
+#"ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CORN", "GRS", "WET", "OTH", "URB"
 
 
 ## Functions to get scale factors
@@ -140,27 +143,84 @@ if (is.na(tair[i])){TScale[i] <- NA} else
   return(TScale) 
 }
 # Phenology scalar
-getPScale = function(idx,EVI){
-  SOS_i = GS.dt$SOS[GS.dt$Index==idx]
-  EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+getPScale = function(idx,EVI,wtr){
+  if(wtr==1){
+    SOS_i=1
+    EOS_i=365
+  }else{
+    SOS_i = GS.dt$SOS[GS.dt$Index==idx]
+    EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+  }
   EVI_min = min(EVI)    # Min and Max EVI within the whole year
   EVI_delta = max(EVI) - EVI_min
   PScale   = (EVI - EVI_min)/EVI_delta
   PScale[PScale<0] = 0
   PScale[PScale>1] = 1
+  #PScale[abs(PScale)>0] = 1
+  if(is.na(SOS_i) & is.na(EOS_i)){
+    SOS_i<-1
+    EOS_i<-365
+  }
+  if(is.na(EOS_i)){
+    EOS_i<-365
+  }
   # Prior to bud burst (Start of Season), PScale set to 0
   PScale[1:(24*SOS_i)] <- 0
   # PScale Set to 0 during dormancy (after 85% decrease in greenness)
   PScale[(24*EOS_i):length(PScale)] <- 0
   return(PScale)
 }
+
+
+#CCI scalar (to replace P-Scale)
+getCScale = function(idx,CCI,wtr){
+  if(wtr==1){
+    SOS_i=1
+    EOS_i=365
+  }else{
+    SOS_i = GS.dt$SOS[GS.dt$Index==idx]
+    EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+  }
+  CCI_min = min(-CCI)    # Min and Max CCI within the whole year (large CCI means low GPP so flip the sign)
+  CCI_delta = max(-CCI) - -CCI_min
+  CScale   = (-CCI - -CCI_min)/CCI_delta
+  CScale[CScale<0] = 0
+  CScale[CScale>1] = 1
+  #CScale[abs(CScale)>0] = 1
+  if(is.na(SOS_i) & is.na(EOS_i)){
+    SOS_i<-1
+    EOS_i<-365
+  }
+  if(is.na(EOS_i)){
+    EOS_i<-365
+  }
+  # Prior to bud burst (Start of Season), PScale set to 0
+  CScale[1:(24*SOS_i)] <- 0
+  # PScale Set to 0 during dormancy (after 85% decrease in greenness)
+  CScale[(24*EOS_i):length(CScale)] <- 0
+  return(CScale)
+}
+
+
 # Moisture Scalar
-getWScale = function(idx,EVI,LSWI){
-  
-  SOS_i = GS.dt$SOS[GS.dt$Index==idx]
-  EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+getWScale = function(idx,EVI,LSWI,wtr){
+  if(wtr==1){
+    SOS_i=1
+    EOS_i=0
+  }else{
+    SOS_i = GS.dt$SOS[GS.dt$Index==idx]
+    EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+  }
+  if(is.na(SOS_i) & is.na(EOS_i)){
+    SOS_i<-1
+    EOS_i<-365
+  }
+  if(is.na(EOS_i)){
+    EOS_i<-365
+  }
   SOS = (as.numeric(SOS_i)-1)*24
   EOS = (as.numeric(EOS_i)-1)*24
+  
   LSWI_gsl = LSWI[SOS:EOS]
   
   LSWI_max = max(LSWI_gsl)
@@ -193,14 +253,16 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   ## Get scale factors
   TScale = getTScale(lc,tair)
-  PScale = getPScale(idx,EVI)
-  WScale0 = getWScale(idx,EVI,LSWI)
+  PScale = getPScale(idx,EVI,wtr)
+  #CScale = getCScale(idx,CCI,wtr)
+  WScale0 = getWScale(idx,EVI,LSWI,wtr)
 
   ## Test if EVI causes neg values of GEE
   EVI[EVI<0]=0
   
   ## GEE equation
-  GEE = lmbd * TScale * PScale * WScale0 * EVI * PAR / (1+PAR/PAR0)
+  GEE = lmbd * TScale * WScale0 * EVI * PAR / (1+PAR/PAR0) 
+  #GEE = lmbd * TScale * CScale * WScale0 * EVI * PAR / (1+PAR/PAR0) #Using CCI instead of PScale
   
   # Normalize GEE flux so sub-pixel water isn't counted..
   GEE = GEE * (1 - wtr)
