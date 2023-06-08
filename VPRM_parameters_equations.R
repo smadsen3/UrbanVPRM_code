@@ -127,14 +127,14 @@ getTScale = function(lc,tair){
     TScale = rep(NA, length(tair))
 for (i in 1:length(tair)){
 if (is.na(tair[i])){TScale[i] <- NA} else
-  if (tair[i] >= 20 & tair[i] <= 30){
+  if (tair[i] >= topt & tair[i] <= topt+10){ #20 & tair[i] <= 30){
     TScale[i] = 1
-  } else if(tair[i] < 20){
+  } else if(tair[i] < topt){#20){
   TScale[i] = ((tair[i] - tmin)*(tair[i]-tmax)) / 
-    ((tair[i]-tmin)*(tair[i]-tmax) - (tair[i]-20)^2)
+    ((tair[i]-tmin)*(tair[i]-tmax) - (tair[i]-topt)^2)#20)^2)
 } else {
     TScale[i] = ((tair[i] - tmin)*(tair[i]-tmax)) / 
-      ((tair[i]-tmin)*(tair[i]-tmax) - (tair[i]-20)^2)
+      ((tair[i]-tmin)*(tair[i]-tmax) - (tair[i]-topt)^2)#20)^2)
 }
 }
 
@@ -171,6 +171,42 @@ getPScale = function(idx,EVI,wtr){
   return(PScale)
 }
 
+# Start/End of Season scalar (to replace PScale)
+getSEoSScale = function(idx,EVI,wtr){
+  if(wtr==1){
+    SOS_i=1
+    EOS_i=365
+  }else{
+    SOS_i = GS.dt$SOS[GS.dt$Index==idx]
+    EOS_i = GS.dt$EOS[GS.dt$Index==idx]
+  }
+  
+  SEoS_Scale = EVI*0+1
+  SEoS_Scale[is.na(SEoS_Scale)]=1
+  
+  #PScale[abs(PScale)>0] = 1
+  if(is.na(SOS_i) & is.na(EOS_i)){
+    SOS_i<-1
+    EOS_i<-365
+  }
+  if(is.na(EOS_i)){
+    EOS_i<-365
+  }
+  
+  #we don't expect photosynthesis before the end of march
+  if(SOS_i<90){
+    SOS_i<-90
+  }
+  #We don't expect photosynthesis in December
+  if(EOS_i>340){
+    EOS_i<-340
+  }
+  # Prior to bud burst (Start of Season), SEoS_Scale set to 0
+  SEoS_Scale[1:(24*SOS_i)] <- 0
+  # PScale Set to 0 during dormancy (after 85% decrease in greenness)
+  SEoS_Scale[(24*EOS_i):length(SEoS_Scale)] <- 0
+  return(SEoS_Scale)
+}
 
 #CCI scalar (to replace P-Scale)
 getCScale = function(idx,CCI,wtr){
@@ -253,7 +289,8 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   ## Get scale factors
   TScale = getTScale(lc,tair)
-  PScale = getPScale(idx,EVI,wtr)
+  #PScale = getPScale(idx,EVI,wtr)
+  SEoS_Scale = getSEoSScale(idx,EVI,wtr) #Scaling factor for start/end of season
   #CScale = getCScale(idx,CCI,wtr)
   WScale0 = getWScale(idx,EVI,LSWI,wtr)
 
@@ -261,7 +298,7 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   EVI[EVI<0]=0
   
   ## GEE equation
-  GEE = lmbd * TScale * WScale0 * EVI * PAR / (1+PAR/PAR0) 
+  GEE = lmbd * TScale * SEoS_Scale * WScale0 * EVI * PAR / (1+PAR/PAR0) 
   #GEE = lmbd * TScale * CScale * WScale0 * EVI * PAR / (1+PAR/PAR0) #Using CCI instead of PScale
   
   # Normalize GEE flux so sub-pixel water isn't counted..
@@ -269,7 +306,8 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   #MAY NEED TO MOVE THIS TO AFTER R EQUATION
   TScale = as.data.frame(as.numeric(TScale))
-  PScale = as.data.frame(as.numeric(PScale))
+  SEoS_Scale = as.data.frame(as.numeric(SEoS_Scale))
+  #PScale = as.data.frame(as.numeric(PScale))
   WScale = as.data.frame(as.numeric(WScale0))
   PAR2 = as.data.frame(as.numeric(PAR)) 
   
@@ -277,7 +315,7 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   indexcol = rep(idx,time=nrow(time))
   
   ## Merge outputs related to GEE flux
-  result = cbind(time,indexcol,GEE,TScale,PScale,WScale,PAR,tair)
+  result = cbind(time,indexcol,GEE,TScale,SEoS_Scale,WScale,PAR,tair)
   
   ### Get Respiration
   ## Model parameters for Respiration calculation
@@ -337,7 +375,7 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   ## Merge all outputs in the same data table 
   result = cbind(result,Re,Ra,Rh,EVI_scale) 
-  colnames(result) = c("Date","HoY","Index","GEE","TScale","PScale","WScale","PAR","Tair","Re","Ra","Rh","EVI_scale")  
+  colnames(result) = c("Date","HoY","Index","GEE","TScale","SEoS_Scale","WScale","PAR","Tair","Re","Ra","Rh","EVI_scale")  
   
   return(result)
 }

@@ -20,7 +20,7 @@ library("rgdal")
 library("lubridate")
 
 #MODIS:
-LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/MODIS_LC_Borden_500m_2019.tif")
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif")
 #SOLRIS:
 #LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
@@ -141,7 +141,7 @@ for(i in unique(inter_evi_lswi$Index)){
   print(round(i/npixel*100, 1))
 }
 
-write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/adjusted_evi_lswi_interpolated_modis.csv',row.names = F,
+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/adjusted_evi_lswi_interpolated_modis.csv',row.names = F,
             sep=',')
 
 

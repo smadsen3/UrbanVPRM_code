@@ -29,29 +29,29 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
-xmin = -79.9333-4/240
-xmax = -79.9333+4/240
-ymin = 44.3167-4/240
-ymax = 44.3167+4/240
-city = 'Borden_500m_2019'
+#xmin = -79.9333-4/240
+#xmax = -79.9333+4/240
+#ymin = 44.3167-4/240
+#ymax = 44.3167+4/240
+#city = 'Borden_500m_2019'
 
 #xmin = -80.5577-4/240
 #xmax = -80.5577+4/240
 #ymin =  42.6353-4/240
 #ymax =  42.6353+4/240
-#city = 'TPD_500m'
+#city = 'TPD_500m_2019'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = 'TP39_500m'
+#city = 'TP39_500m_2019'
 
-#xmin = -79.7
-#xmax = -79.1
-#ymin =  43.5
-#ymax =  43.9
-#city = 'GTA_500m'
+xmin = -79.7
+xmax = -79.1
+ymin =  43.5
+ymax =  43.9
+city = 'GTA_500m_2019'
 
 yr = 2019
 
@@ -71,7 +71,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/MODIS_LC_Borden_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -111,6 +111,8 @@ goes2modis <- function(dir,file){
     print(paste0("Processing file ",file))
     m <- copy(ls)  
     rs <- raster(paste0(dir,file), varname = 'ssi')
+    rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
+    rs[rs_c<3]<-NA # Remove values which have a 'bad' confidence level
     goes.crop <- crop(rs,extent(GOES.XY))
     goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
     vals <- extract(goes.proj,ls.spdf)
@@ -140,7 +142,7 @@ setkey(dm,x,y,datetime)
 # GOES ssi data has NAs where the archive files are not available. These dates must be inspected, since interpolation to fill NAs is inappropriate for nighttime hours. For the year 2018, all of the missing data occur during nighttime hours. These are set to zero for the year.
 
 # Load RAP .rds file to join with GOES completed data.table
-rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'.rds'))
+rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'.rds'))#'_',yr,'.rds'))
 setkey(rap2,x,y,datetime)
 rap2 <- dm[rap2]
 td <- times[,.(datetime,hour)]
@@ -176,14 +178,73 @@ setkey(rap2,chr)
 rap2 <- sunrise[rap2]
 rap2 <- sunset[rap2]
 invisible(gc())
+
+rap2[swrad<=0, swrad:=NA]
+
 rap2[is.na(swrad) & hour<=riseTime+1,swrad:=0]
 rap2[is.na(swrad) & hour>=setTime-1,swrad:=0]
+
+
+
+
+#rap_test=rap2 #make a copy of the dataframe
+##make an array with indices where swrad is missing
+#sw_na <- which((is.na(rap_test$swrad)) & (rap_test$hour>rap_test$riseTime+1) & (rap_test$hour<rap_test$setTime-1))
+
+##loop over missing swrad data and fill it with average of data from the hour before and the hour after
+#for (i in sw_na){
+#  rap_test$swrad[i]<-(rap_test$swrad[i+13824]+rap_test$swrad[i-13824])/2
+#}
+
+
+
+
 setorder(rap2,y,x,chr)
 len <- dim(rap2[chr==1])[1]
 rap2[,Index := .GRP, by = .(x,y)]
 rap2 <- rap2[,.(Index,x,y,datetime,chr,tempK,swrad)]
 rap2[,tempK:=round(tempK,2)][,swrad:=round(swrad,2)]
 setnames(rap2,'chr','HOY')
+
+
+
+##There are still some remaining swrad NA values during the day, 
+## try to interpolate to get these values
+### Set up new dataframe for swrad Interpolation
+#npixel <- length(unique(rap2$Index))
+#inter_swrad <- as.data.frame(matrix(ncol = 2, nrow = npixel*365*24))
+#colnames(inter_swrad) <- c('Index', 'HOY')
+#inter_swrad[,1] <- rep(seq(1,npixel,1), 365*24)
+#inter_swrad <- inter_swrad[order(inter_swrad[,1]),]
+#inter_swrad[,2] <- rep(seq(1,365*24,1), npixel)
+#inter_swrad <- merge(inter_swrad, rap2[,c('Index', 'swrad', 'HOY')], by = c('Index', 'HOY'), all = TRUE)
+#inter_swrad <- inter_swrad[order(inter_swrad[,'Index'],inter_swrad[,'HOY']),]
+
+
+## add coordinates
+#x <- as.data.frame(tapply(rap2$x, rap2$Index, mean, na.rm = T))
+#y <- as.data.frame(tapply(rap2$y, rap2$Index, mean, na.rm = T))
+#xy <- cbind(as.numeric(rownames(x)), x, y)
+#colnames(xy) <- c('Index', 'x', 'y')
+
+#inter_swrad <- merge(inter_swrad, xy, by = 'Index', all = TRUE)
+#inter_swrad <- inter_swrad[,c('Index', 'HOY', 'x', 'y', 'swrad')]
+
+## Interpolate hourly swrad values for each pixel
+#inter_swrad$swrad_inter <- NA
+
+#for(i in unique(inter_swrad$Index)){
+#  if(is.finite(mean(inter_swrad[which(inter_swrad$Index == i),'swrad'], na.rm = T)) & length(inter_swrad[which(inter_swrad$Index == i & is.finite(inter_swrad$swrad)),'swrad']) > 10){
+#    pix <- inter_swrad[which(inter_swrad$Index == i),]
+#    spl <- with(pix[!is.na(pix$swrad),],smooth.spline(DOY,swrad, spar = .25)) 
+#    inter_swrad[which(inter_swrad$Index == i),'swrad_inter'] <- predict(spl, c(1:365*24))$y
+#  } else {inter_swrad[which(inter_swrad$Index == i),'swrad_inter'] <- NA}
+#  print(round(i/npixel*100, 1))
+#}
+
+
+
+
 
 ## Convert Temperature to °C
 rap2$tempK = rap2$tempK-273.15
@@ -194,7 +255,7 @@ rap2 <- rap2[,-1]
 
 # import raster used for indexing
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/MODIS_LC_Borden_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
 
 
 ## Function to convert tif into a datatable..
@@ -216,4 +277,4 @@ setkey(Idx.dt, x,y)
 setkey(rap2,x,y)
 
 # Save in RDS binary format to preserve space
-saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_',yr,'_hourly.rds'))
+saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_',yr,'_hourly_test.rds'))

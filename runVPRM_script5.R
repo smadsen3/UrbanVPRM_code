@@ -30,20 +30,20 @@ print(paste0("n. of cores is ",cores))
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
-city = 'Borden_500m_2019'
-yr = 2019
+city = 'GTA_500m_2018'
+yr = 2018
 veg_type = 'DBF' #Maybe use Mixed forest instead?
 
 ## If area is too big (n of pixels > nrow_block) divide in blocks of nrow_block cells
 nrow_block=2500
 
 # Climate data folder
-dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/2019') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
+dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/2018') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
 
 ## Define the path to the folder where outputs are saved 
 dir.create(paste0("outputs"), showWarnings = FALSE)
 
-dir.create(paste0("outputs/",city,"/test"), showWarnings = FALSE)
+dir.create(paste0("outputs/",city), showWarnings = FALSE)
 dir_out = paste0(city)
 
 ## Function to convert tif into a datatable..
@@ -58,15 +58,15 @@ tifdt_fun = function(raster,name){
 ### LOAD DATA
 ## Land cover and ISA
 ## NEED TO CONVERT LC DATA TO SAME FORMAT AS NLCD DATA
-LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/MODIS_LC_Borden_500m_2019.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/LandCover/MODIS_LC_GTA_500m.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 LC.dt = tifdt_fun(LC,"LandCover")
 #LC_NIST = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/Landcover/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 #LC_NIST.dt = tifdt_fun(LC_NIST,"LandCover")
 
-ISA_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/ISA/ISA_Borden_all_500m_2019.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+ISA_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/ISA/ISA_GTA_mixed_500m_2018.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 ISA.dt = tifdt_fun(ISA_dat,"ISA")
 
-C4 = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/C4_frac_Borden_500m_2019.tif') # C4 fraction
+C4 = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/LandCover/C4_frac_GTA_500m.tif') # C4 fraction
 C4.dt = tifdt_fun(C4,"C4")
 ## Merge LC and ISA
 #LC_ISA.dt = merge(LC.dt,ISA.dt,by=c("Index","x","y")) 
@@ -85,7 +85,7 @@ npixel = as.numeric(nrow(LC_ISA.dt))
 print(paste0("n. of pixels is ",npixel))
 
 
-wtr_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/SOLRIS_aggregated_water_cover_Borden.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+wtr_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/SOLRIS_aggregated_water_cover_GTA.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
 wtr.dt = tifdt_fun(wtr_dat,"wtr")
 
 rm(ISA_dat,LC.dt,ISA.dt,C4,C4.dt,LC_ISA.test,wtr_dat)
@@ -100,11 +100,11 @@ print("LC, ISA & wtr loaded!")
 # 15% EVI increase
 #greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 
-greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup_2019.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 greenup <- crop(greenup,LC) #crop greenup to be the same size as LC data
 
 # 85% EVI decrease
-dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_Dormancy_2019.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+dormancy <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_Dormancy.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 dormancy<- crop(dormancy,LC)
 SoGS.dt = tifdt_fun(greenup,"SOS")
 EoGS.dt = tifdt_fun(dormancy,"EOS")
@@ -113,7 +113,7 @@ GS.dt = merge(SoGS.dt,EoGS.dt,by=c("Index","x","y"))
 rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 
 ## Landsat EVI and LSWI
-LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/adjusted_evi_lswi_interpolated_modis.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/adjusted_evi_lswi_interpolated_modis.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
 
 
 #Uncomment below to visualize
@@ -210,7 +210,7 @@ LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/data
 # TP39 Pixel = 158 #deciduous or  109 #Mixed forest
 # TPD Pixel = 153 #deciduous
 # GTA Pixel = 3011 # deciduous
-EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 98),]  
+EVI_ref = LS_VI.dt[which(LS_VI.dt$Index == 3011),]  
 EVI_ref = EVI_ref$EVI_inter
 minEVI_ref = min(EVI_ref)
 EVI_ref = rep(EVI_ref,each=24)
@@ -248,7 +248,7 @@ for(j in 1:length(blocks)) {
   #if(length(blocks)>1){
   #  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly_block_",sprintf("%08i",as.numeric(block)),".rds")) 
   #} else {
-  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly.rds"))
+  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_hourly_v3_cropped.rds"))
   #clima.dt = readRDS(paste0(dir_clima,"/rap_goes_GTA_500m_",yr,"_hourly.rds"))
   #}
   
@@ -307,12 +307,12 @@ for(j in 1:length(blocks)) {
   cat("\n Save data table with outputs..")
   
   if(length(blocks)>1){
-    write.table(output.dt, paste0("Borden_500m_2019/vprm_mixed_ISA_500m_Borden_2019_no_PScale_block_",sprintf("%08i",as.numeric(block)),".csv"),
+    write.table(output.dt, paste0("GTA_500m_2018/vprm_mixed_ISA_500m_GTA_2018_no_PScale_adjusted_Topt_block_",sprintf("%08i",as.numeric(block)),".csv"),
                 row.names = F, sep = ',')
     #saveRDS(output.dt, paste0(dir_out,"/fluxes_",city,"_",yr,"_",veg_type,"_block_",
     #                          sprintf("%08i",as.numeric(block)),".rds"))
   } else {
-    write.table(output.dt, "Borden_500m_2019/vprm_mixed_ISA_500m_Borden_2019_no_PScale.csv",row.names = F,
+    write.table(output.dt, "GTA_500m_2018/vprm_mixed_ISA_500m_GTA_2018_no_PScale_adjusted_Topt.csv",row.names = F,
                 sep = ',')
   }
   

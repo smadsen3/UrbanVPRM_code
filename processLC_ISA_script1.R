@@ -17,7 +17,7 @@ library("shapefiles")
 
 ## Create Directories
 setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files")
-city = 'Borden_500m_2019'
+city = 'GTA_500m_2019'
 print("Create directories for LC data")
 dir.create(paste0(city),showWarnings = FALSE)
 dir.create(paste0(city,"/LandCover"),showWarnings = FALSE)
@@ -44,9 +44,9 @@ MODIS_CRS = '+proj=longlat +datum=WGS84 +no_defs'
 #NIST_bound_box = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/shapefiles",layer='NIST_30m_BB') # shapefile data in /urbanVPRM_30m/shapefiles/
 
 #####  HERE ######
-#bound_box_0 = readOGR(dsn="E:/Research/UrbanVPRM/dataverse_files/TPD/shapefiles", layer='TPD_30m_BB_4km')
+bound_box_0 = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/shapefiles", layer='GTA_500m_BB')
 
-bound_box_0 = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/shapefiles", layer='Borden_30m_BB_4km') #TPD/shapefiles",layer='TPD_30m_BB_4km') # shapefile data in /urbanVPRM_30m/shapefiles/
+#bound_box_0 = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_2019/shapefiles", layer='TP39_30m_BB_4km') #TPD/shapefiles",layer='TPD_30m_BB_4km') # shapefile data in /urbanVPRM_30m/shapefiles/
 #bound_box = spTransform(bound_box_0, LANDSAT_CRS)
 bound_box_MODIS = spTransform(bound_box_0, '+proj=longlat +datum=WGS84 +no_defs')
 
@@ -67,7 +67,7 @@ LC_crop = crop(LC_ON, bound_box_MODIS)
 #LClandsatcrop = mask(LClandsatcrop,bound_box)
 
 # ISA ***NEED to decide on dataset used and figure out how to get it in the right format
-ISA_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/all_aggregated_impervious_63_Borden.tif") # Impervious data from https://www.mrlc.gov/data
+ISA_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/all_aggregated_impervious_63_entire_GTA.tif")#all_aggregated_impervious_63_TPD.tif") # Impervious data from https://www.mrlc.gov/data
 #grid_ISA = projectRaster(ISA_ON,crs=MODIS_CRS)
 ISA_ONcrop = crop(ISA_ON,bound_box_MODIS)
 
@@ -87,11 +87,11 @@ C4_ON = raster("C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ACI_C4_fraction
 C4_ONcrop = crop(C4_ON,bound_box_MODIS)
 
 # Write Rasters
-writeRaster(LC_crop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/MODIS_LC_Borden_500m_2019.tif",
+writeRaster(LC_crop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif",
             overwrite=TRUE)
-writeRaster(ISA_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/ISA/ISA_Borden_all_500m_2019.tif",
+writeRaster(ISA_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/ISA/ISA_GTA_all_500m_2019.tif",
             overwrite=TRUE)
-writeRaster(C4_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_2019/LandCover/C4_frac_Borden_500m_2019.tif",
+writeRaster(C4_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/C4_frac_GTA_500m_2019.tif",
             overwrite=TRUE)
 
 #writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/ACI_LC_Borden.tif",
