@@ -31,7 +31,7 @@ VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "SOY", "CRP", "GRS", "WET", "OTH
 # URB: Urban
 
 ### Model's parameters 
-VPRM_DBF= c(0, 20, 40, 5, 570, 0.127, 0.271, 0.25) # Mahadevan et al. 2008 (Harvard Forest)
+#VPRM_DBF= c(0, 20, 40, 5, 570, 0.127, 0.271, 0.25) # Mahadevan et al. 2008 (Harvard Forest)
 VPRM_DBF= c(0, 30, 40, 5, 863.43378, 0.09355, 0.1379, 1.09) # Winbourne et al. 2021 (Duke Forest)
 VPRM_MXF= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
 VPRM_URB= c(0, 20, 40, 2, 629, 0.123, 0.244, -0.24)
@@ -322,7 +322,8 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
     ## Modify Re components: Rh is reduced by ISA and Ra is reduced by EVI 
     Rh = Rh * (1-isa)
     # Ra reduced by EVI, but rescaled to maintain min EVI
-    EVI_scale = EVI/EVI_ref
+    #EVI_scale = EVI/EVI_ref
+    EVI_scale = (EVI+minEVI_ref*isa)/EVI_ref
     EVI_scale[!(EVI_ref>0.05)] = 1
     EVI_scale[EVI_scale>1] = 1
     EVI_scale[EVI_scale<0] = 0
@@ -341,7 +342,7 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
   
   # MAY NEED TO RE-IMPLEMENT THIS v
   # In Winbourne et al. 2021, minimum ecosystem respiration is set to lowest observed value
-  # if(wtr == 0) {Re[which(Re < 1.7795)] <- 1.7795}
+  if(wtr == 0) {Re[which(Re < 1.7795)] <- 1.7795}
   
   ## Merge all outputs in the same data table 
   result = cbind(result,Re,Ra,Rh,EVI_scale) 

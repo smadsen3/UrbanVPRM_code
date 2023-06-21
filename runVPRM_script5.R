@@ -30,12 +30,12 @@ print(paste0("n. of cores is ",cores))
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
 # Arguments: 
-city = 'GTA_500m_no_adjustments_2018'
+city = 'GTA_500m_RA_adjusted_2018'
 yr = 2018
 veg_type = 'DBF' #Maybe use Mixed forest instead?
 
 ## If area is too big (n of pixels > nrow_block) divide in blocks of nrow_block cells
-nrow_block=2500 #15000 #2500
+nrow_block=2500 #15000
 
 # Climate data folder
 dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/2018') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
@@ -100,7 +100,7 @@ print("LC, ISA & wtr loaded!")
 # 15% EVI increase
 #greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/driver_data/ms_lsp/greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 
-greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup_2019.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
+greenup = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup.tif') # Phenology data in /urbanVPRM_30m/driver_data/ms_lsp/
 greenup <- crop(greenup,LC) #crop greenup to be the same size as LC data
 
 # 85% EVI decrease
@@ -249,7 +249,7 @@ for(j in 1:length(blocks)) {
   #  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_",yr,"_hourly_block_",sprintf("%08i",as.numeric(block)),".rds")) 
   #} else {
   #clima.dt = readRDS(paste0(dir_clima,"/rap_goes_",city,"_hourly.rds"))
-  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_GTA_500m_",yr,"_hourly_swRad_filled_cropped.rds"))
+  clima.dt = readRDS(paste0(dir_clima,"/rap_goes_GTA_500m_",yr,"_hourly_gap_and_0_filled.rds"))
   #}
   
 
@@ -307,12 +307,12 @@ for(j in 1:length(blocks)) {
   cat("\n Save data table with outputs..")
   
   if(length(blocks)>1){
-    write.table(output.dt, paste0("GTA_500m_2018/vprm_mixed_ISA_500m_GTA_2018_no_adjustments_block_",sprintf("%08i",as.numeric(block)),".csv"),
+    write.table(output.dt, paste0("GTA_500m_2018/vprm_mixed_GTA_500m_2018_RA_adjustment_",sprintf("%08i",as.numeric(block)),".csv"),
                 row.names = F, sep = ',')
     #saveRDS(output.dt, paste0(dir_out,"/fluxes_",city,"_",yr,"_",veg_type,"_block_",
     #                          sprintf("%08i",as.numeric(block)),".rds"))
   } else {
-    write.table(output.dt, "GTA_500m_2018/vprm_mixed_ISA_500m_GTA_2018_no_adjustments.csv",row.names = F,
+    write.table(output.dt, "GTA_500m_2018/vprm_mixed_ISA_500m_GTA_2018_RA_adjustment.csv",row.names = F,
                 sep = ',')
   }
   
