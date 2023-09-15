@@ -112,7 +112,8 @@ goes2modis <- function(dir,file){
     m <- copy(ls)  
     rs <- raster(paste0(dir,file), varname = 'ssi')
     rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
-    rs[rs_c<3]<-NA # Remove values which have a 'bad' confidence level
+    rs[rs_c<3]<-NA # Only use excellent data
+    # Remove values which have a 'bad' confidence level <3
     goes.crop <- crop(rs,extent(GOES.XY))
     goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
     vals <- extract(goes.proj,ls.spdf)
@@ -142,7 +143,7 @@ setkey(dm,x,y,datetime)
 # GOES ssi data has NAs where the archive files are not available. These dates must be inspected, since interpolation to fill NAs is inappropriate for nighttime hours. For the year 2018, all of the missing data occur during nighttime hours. These are set to zero for the year.
 
 # Load RAP .rds file to join with GOES completed data.table
-rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'.rds'))#'_',yr,'.rds'))
+rap2 <- readRDS(paste0(outDIR,'/rap_',city,'.rds'))#'_',yr,'.rds'))
 setkey(rap2,x,y,datetime)
 rap2 <- dm[rap2]
 td <- times[,.(datetime,hour)]
@@ -151,7 +152,7 @@ setkey(td,datetime)
 setkey(rap2,datetime)
 rap2 <- td[rap2]
 
-# Deal with GOES NA values
+# Deal with GOES NA values (at night)
 centX <- mean(xmin,xmax)
 centY <- mean(ymin,ymax)
 # 
@@ -181,8 +182,14 @@ invisible(gc())
 
 rap2[swrad<=0, swrad:=NA]
 
-rap2[is.na(swrad) & hour<=riseTime+1,swrad:=0]
-rap2[is.na(swrad) & hour>=setTime-1,swrad:=0]
+#Before NA data during the day was being filled with zeros if the time the sun
+#set was the next day (in UTC) to remedy this, check if the set time < rise time
+# if so if the hour is between those times set NA swrad to 0
+rap2[is.na(swrad) & setTime<riseTime & hour<=riseTime+1 & hour>=setTime-1,swrad:=0]
+
+#if not set NA swrad to 0 if it is after the set time OR before the rise time
+rap2[is.na(swrad) & setTime>riseTime &  hour<=riseTime+1,swrad:=0]
+rap2[is.na(swrad) & setTime>riseTime & hour>=setTime-1,swrad:=0]
 
 
 
@@ -277,4 +284,4 @@ setkey(Idx.dt, x,y)
 setkey(rap2,x,y)
 
 # Save in RDS binary format to preserve space
-saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_',yr,'_hourly_test.rds'))
+saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_hourly_fixed.rds'))
