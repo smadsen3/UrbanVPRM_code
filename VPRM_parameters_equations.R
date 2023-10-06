@@ -49,7 +49,8 @@ VPRM_LCs = c("ENF", "DBF", "MXF", "SHB", "SVN", "CRP", "CORN", "GRS", "WET", "OT
 ### Model's parameters from Gourdji et al. 2021
 VPRM_DBF= c(0, 45, 23, -15, 0.55, -0.1023, 539, 0.12, 0.065, 0.0024, 4.61, 0.116, -0.0005, 0.0009)
 VPRM_MXF= c(0, 45, 18, 1, 0.05, -0.1097, 506, 0.47, 0.088, 0.0047, 1.39, -0.530, 0.2063,-0.0054)
-VPRM_URB= c(0, 45, 20, 11, 0.1, -0.1273, 673, -6.18, 0.853, -0.0250, 5.19, 1.749, -0.2829, 0.0166) #Used dev-open from Gourdji et al. 2021
+#VPRM_URB= c(0, 45, 20, 11, 0.1, -0.1273, 673, -6.18, 0.853, -0.0250, 5.19, 1.749, -0.2829, 0.0166) #Used Grass/Pasture/Developed-open from Gourdji et al. 2021
+VPRM_URB= c(0, 45, 23, -15, 0.55, -0.1023, 539, 0.12, 0.065, 0.0024, 4.61, 0.116, -0.0005, 0.0009) #Used DBF/Urban from Gourdji et al. 2021
 VPRM_SHB= c(0, 45, 17, 5, 0.1, -0.0996, 811, 1.53, 0.004, 0.0049, 0.09, -1.787, 0.4537, -0.0138)
 
 VPRM_CRP= c(0, 45, 26, 7, 0.05, -0.0732, 1019, -1.2, 0.234, -0.006, 3.85, 0.032, -0.0429, 0.0090) #Used Crops, other from Gourdji
@@ -352,7 +353,7 @@ getFluxes = function(time,idx,lc,isa,wtr,EVI,LSWI,tair,swrad){
     ## Modify Re components: Rh is reduced by ISA and Ra is reduced by EVI 
     Rh = Rh * (1-isa)
     # Ra reduced by EVI, but rescaled to maintain min EVI
-    EVI_scale = EVI/EVI_ref
+    EVI_scale = (EVI+minEVI_ref*isa)/EVI_ref
     EVI_scale[!(EVI_ref>0.05)] = 1
     EVI_scale[EVI_scale>1] = 1
     EVI_scale[EVI_scale<0] = 0
