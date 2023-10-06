@@ -33,34 +33,34 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_500m_2019'
+#city = 'Borden_V061_500m_2018'
 
-#xmin = -80.5577-4/240
-#xmax = -80.5577+4/240
-#ymin =  42.6353-4/240
-#ymax =  42.6353+4/240
-#city = 'TPD_500m_2019'
+xmin = -80.5577-4/240
+xmax = -80.5577+4/240
+ymin =  42.6353-4/240
+ymax =  42.6353+4/240
+city = 'TPD_V061_500m_2018'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = 'TP39_500m_2019'
+#city = 'TP39_V061_500m_2018'
 
-xmin = -79.7
-xmax = -79.1
-ymin =  43.5
-ymax =  43.9
-city = 'GTA_500m_2019'
+#xmin = -79.7
+#xmax = -79.1
+#ymin =  43.5
+#ymax =  43.9
+#city = 'GTA_V061_500m_2018'
 
-yr = 2019
+yr = 2018
 
 # Set input and create output files directories
-inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2019/origTIFF/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2018/origTIFF/')
 outDIR <- paste0(city,'/',yr)
 
 # Time file
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -71,7 +71,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -106,31 +106,49 @@ rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://ef
 #  }
 #}
 
-goes2modis <- function(dir,file){
-  if(file.exists(paste0(dir,file))){
-    print(paste0("Processing file ",file))
-    m <- copy(ls)  
-    rs <- raster(paste0(dir,file), varname = 'ssi')
-    rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
-    rs[rs_c<3]<-NA # Only use excellent data
-    # Remove values which have a 'bad' confidence level <3
-    goes.crop <- crop(rs,extent(GOES.XY))
-    goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
-    vals <- extract(goes.proj,ls.spdf)
-    values(m) <- vals
-    y <- list(m)
-    return(y)
-  }
+goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/pre_processed_GOES/goes_TPD_2018_pre_processed_mean_filling_test_NA_rm.rds")
+goes_data<-goes_data[,.(x,y,datetime,sw_test)]
+
+outlist<-NULL
+for (d in unique(goes_data$datetime)){
+  m<-copy(ls)
+  #print(paste0("Processing ",d))
+  godat<-rasterFromXYZ(goes_data[goes_data$datetime==d])
+  godat<-godat$sw_test
+  crs(godat)<-GOES_CRS
+  #godat<-crop(godat,extent(GOES.XY))
+  #godat<-projectRaster(godat,crs=MODIS_CRS)
+  vals<- extract(godat,ls.spdf)
+  values(m)<-vals
+  outlist<-append(outlist,m)
 }
+
+
+#goes2modis <- function(dir,file){
+#  if(file.exists(paste0(dir,file))){
+#    print(paste0("Processing file ",file))
+#    m <- copy(ls)  
+#    rs <- raster(paste0(dir,file), varname = 'ssi')
+#    rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
+#    rs[rs_c<3]<-NA # Only use excellent data
+#    # Remove values which have a 'bad' confidence level <3
+#    goes.crop <- crop(rs,extent(GOES.XY))
+#    goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
+#    vals <- extract(goes.proj,ls.spdf)
+#    values(m) <- vals
+#    y <- list(m)
+#    return(y)
+#  }
+#}
 
 print("done! 2")
 
 # run function
-outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
+#outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
 rm(ls,ls.spdf,GOES.XY)
 
 # Compile all cropped and reprojected hourly rasters into single "long" data.table
-cnames <- substr(rl,1,10)
+cnames <- as.character(times$datetime)#substr(rl,1,10)
 st = stack(outlist) 
 dt <- as.data.table(as.data.frame(st,xy=T))
 setnames(dt,c('x','y',cnames))    
@@ -152,56 +170,57 @@ setkey(td,datetime)
 setkey(rap2,datetime)
 rap2 <- td[rap2]
 
-# Deal with GOES NA values (at night)
-centX <- mean(xmin,xmax)
-centY <- mean(ymin,ymax)
-# 
-sun.rise <- function(x){
-  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[1]
-  return(y)
-}
-sun.set <- function(x){
-  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[2]
-  return(y)
-}
-# 
-sunrise <- melt.data.table(as.data.table(lapply(times$datetime,sun.rise)),variable.name = 'chr',value.name='posTime')
-sunrise[,chr:=seq(length(unique(times$chr)))][,riseTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
-sunrise <- sunrise[,.(chr,riseTime)]
-setkey(sunrise,chr)
-sunset <- melt.data.table(as.data.table(lapply(times$datetime,sun.set)),variable.name = 'chr',value.name='posTime')
-sunset[,chr:=seq(length(unique(times$chr)))][,setTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
-sunset <- sunset[,.(chr,setTime)]
-setkey(sunset,chr)
+#Already did this in the pre-processing code
+## Deal with GOES NA values (at night)
+#centX <- mean(xmin,xmax)
+#centY <- mean(ymin,ymax)
+## 
+#sun.rise <- function(x){
+#  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[1]
+#  return(y)
+#}
+#sun.set <- function(x){
+#  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[2]
+#  return(y)
+#}
+## 
+#sunrise <- melt.data.table(as.data.table(lapply(times$datetime,sun.rise)),variable.name = 'chr',value.name='posTime')
+#sunrise[,chr:=seq(length(unique(times$chr)))][,riseTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
+#sunrise <- sunrise[,.(chr,riseTime)]
+#setkey(sunrise,chr)
+#sunset <- melt.data.table(as.data.table(lapply(times$datetime,sun.set)),variable.name = 'chr',value.name='posTime')
+#sunset[,chr:=seq(length(unique(times$chr)))][,setTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
+#sunset <- sunset[,.(chr,setTime)]
+#setkey(sunset,chr)
 
 rap2[,chr := .GRP, by = .(datetime)]
 setkey(rap2,chr)
-rap2 <- sunrise[rap2]
-rap2 <- sunset[rap2]
+#rap2 <- sunrise[rap2]
+#rap2 <- sunset[rap2]
 invisible(gc())
 
-rap2[swrad<=0, swrad:=NA]
+##rap2[swrad<=0, swrad:=NA]
 
-#Before NA data during the day was being filled with zeros if the time the sun
-#set was the next day (in UTC) to remedy this, check if the set time < rise time
-# if so if the hour is between those times set NA swrad to 0
-rap2[is.na(swrad) & setTime<riseTime & hour<=riseTime+1 & hour>=setTime-1,swrad:=0]
+##Before NA data during the day was being filled with zeros if the time the sun
+##set was the next day (in UTC) to remedy this, check if the set time < rise time
+## if so if the hour is between those times set NA swrad to 0
+#rap2[is.na(swrad) & setTime<riseTime & hour<=riseTime+1 & hour>=setTime-1,swrad:=0]
 
-#if not set NA swrad to 0 if it is after the set time OR before the rise time
-rap2[is.na(swrad) & setTime>riseTime &  hour<=riseTime+1,swrad:=0]
-rap2[is.na(swrad) & setTime>riseTime & hour>=setTime-1,swrad:=0]
-
-
+##if not set NA swrad to 0 if it is after the set time OR before the rise time
+#rap2[is.na(swrad) & setTime>riseTime &  hour<=riseTime+1,swrad:=0]
+#rap2[is.na(swrad) & setTime>riseTime & hour>=setTime-1,swrad:=0]
 
 
-#rap_test=rap2 #make a copy of the dataframe
-##make an array with indices where swrad is missing
-#sw_na <- which((is.na(rap_test$swrad)) & (rap_test$hour>rap_test$riseTime+1) & (rap_test$hour<rap_test$setTime-1))
 
-##loop over missing swrad data and fill it with average of data from the hour before and the hour after
-#for (i in sw_na){
-#  rap_test$swrad[i]<-(rap_test$swrad[i+13824]+rap_test$swrad[i-13824])/2
-#}
+
+##rap_test=rap2 #make a copy of the dataframe
+###make an array with indices where swrad is missing
+##sw_na <- which((is.na(rap_test$swrad)) & (rap_test$hour>rap_test$riseTime+1) & (rap_test$hour<rap_test$setTime-1))
+
+###loop over missing swrad data and fill it with average of data from the hour before and the hour after
+##for (i in sw_na){
+##  rap_test$swrad[i]<-(rap_test$swrad[i+13824]+rap_test$swrad[i-13824])/2
+##}
 
 
 
@@ -262,7 +281,7 @@ rap2 <- rap2[,-1]
 
 # import raster used for indexing
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif')
 
 
 ## Function to convert tif into a datatable..

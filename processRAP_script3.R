@@ -25,25 +25,25 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_500m_2019'
+#city = 'Borden_V061_500m_2018'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = "TP39_500m_2019"
+#city = "TP39_V061_500m_2018"
 
-#xmin = -80.5577-4/240
-#xmax = -80.5577+4/240
-#ymin =  42.6353-4/240
-#ymax =  42.6353+4/240
-#city = "TPD_500m_2019"
+xmin = -80.5577-4/240
+xmax = -80.5577+4/240
+ymin =  42.6353-4/240
+ymax =  42.6353+4/240
+city = "TPD_V061_500m_2019"
 
-xmin = -79.7
-xmax = -79.1
-ymin =  43.5
-ymax =  43.9
-city = 'GTA_V061_500m_2018'
+#xmin = -79.7
+#xmax = -79.1
+#ymin =  43.5
+#ymax =  43.9
+#city = 'GTA_V061_500m_2018'
 
 yr = 2018
  
@@ -69,7 +69,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2018/LandCover/MODIS_LC_GTA_500m_2018.tif')
+md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif')
 values(md) <- 1
 #values(ls) <- 1
 md.spdf <- as(md, 'SpatialPointsDataFrame')
@@ -166,7 +166,6 @@ if (length(missing_dates)>0){
 setkey(test_dm,datetime)
 
 test_dm <- td[test_dm, on='datetime']
-#End fix for missing data
 
 #If data not missing run this line:
 #dm <- td[dm, on = 'datetime']
@@ -241,9 +240,13 @@ for (i in missing_dates){
 
 #test2_dm$tempK-ERAdm$tempK
 
+
 #END OF MISSING DATA FIX
-#dm <- td[dm, on = 'datetime']
+
+
+
+dm <- td[dm, on = 'datetime']
 
 # Save in RDS binary format to preserve space
-saveRDS(dm, paste0(outDIR,'/rap_',city,'_',yr,'.rds'))
+saveRDS(dm, paste0(outDIR,'/rap_',city,'.rds'))
 cat("\n Done 3!")
