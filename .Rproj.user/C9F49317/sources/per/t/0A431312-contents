@@ -1,0 +1,202 @@
+memory.limit(size=5e8)
+# import packages
+library(StreamMetabolism)
+library(rgdal)
+library(zoo)
+library(purrr)
+library(data.table)
+library(ncdf4)
+library(raster)
+library(sp)
+library(parallel)
+
+rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/RAPgrib/subfolder/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/origTIFF/')
+#inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/ERA5/')
+fl<-'rap_130_20190601_1500_001.tif'
+#fl<-'era5_2T_data_201906.tif'
+rs <- raster(paste0(inDIR,fl))
+
+
+#xmin = -79.7
+#xmax = -79.1
+#ymin =  43.5
+#ymax =  43.9
+#xmin = -90
+#xmax = -60
+#ymin =  30
+#ymax =  60
+
+xmin= -81
+xmax = -78.3
+ymin = 42.4
+ymax = 44.7
+city = 'GTA_500m'
+
+yr = 2019
+
+# Set/Create file directories
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/origTIFF/')
+#dir.create(paste0(city),showWarnings = FALSE)
+#dir.create(paste0(city,'/',yr),showWarnings = FALSE)
+#outDIR <- paste0(city,'/',yr)
+rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/RAPgrib/subfolder/')
+
+# Time file
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
+setkey(times,chr)
+
+# CRS list
+LANDSAT_CRS = "+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+RAP_CRS = "+proj=lcc +lat_1=25 +lat_2=25 +lat_0=25 +lon_0=265 +x_0=0 +y_0=0 +a=6371229 +b=6371229 +units=m +no_defs"
+MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
+###############################################################################
+
+# Create slightly larger bounding box to crop to (avoids dropped pixels at edge when reprojecting / resampling)
+bbox <- extent(xmin,xmax,ymin,ymax)
+buff=0.05
+bbox.extra <- extent(xmin - buff, xmax + buff, ymin - buff, ymax + buff)
+
+# Import raster of study domain and convert to SpatialPoints object for resampling
+#ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+#md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2018/LandCover/MODIS_LC_GTA_500m.tif')
+md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/MODIS_phenology/MODIS_avg_greenup_2019.tif')
+#md <- crop(md,bbox)
+values(md) <- 1
+#values(ls) <- 1
+md.spdf <- as(md, 'SpatialPointsDataFrame')
+#ls.spdf <- as(ls,'SpatialPointsDataFrame')
+
+
+
+
+# Create extended bounding box raster in Landsat projection 
+gridXY = as(raster::extent(bbox.extra), "SpatialPolygons")
+proj4string(gridXY) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+dom.bbextra <- as(gridXY,'SpatialPolygonsDataFrame')
+RAP.XY <- projectRaster(raster(gridXY),crs=MODIS_CRS)
+#RAP.XY<-raster(gridXY,crs=crs(md),res=res(md))
+#res(RAP.XY)<-res(md)
+
+# Obtain correct extent for RAP files from one of the raw RAP grib2 data files
+rl.grb <- list.files(path=rapDIR,recursive='TRUE',pattern='.grb2') # rap data downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
+RAP_EXT <- extent(raster(paste0(rapDIR,rl.grb[1]))) #DOESN'T UNDERSTAND PROJECTION...?
+#looks like I only need to keep one .grb2 file, the rest I can delete I think
+
+# Create file list of converted RAP .tif data files to crop and project 
+rl <- list.files(path=inDIR,pattern='rap') #need to create tif files for rap data
+
+## function to extract RAP data for study domain
+#rap2landsat <- function(dir,file,domain){
+#  print(paste0("Processing file ",file))
+#  m <- copy(ls)
+#  rs <- raster(paste0(dir,file))
+#  extent(rs) = RAP_EXT
+#  rs <- projectRaster(rs, crs = crs(ls))
+#  rap.crop <- crop(rs,extent(RAP.XY))
+#  vals <- extract(rap.crop,ls.spdf)
+#  values(m) <- vals
+#  y <- list(m)
+#  return(y)
+#}
+
+# function to extract RAP data for study domain
+rap2modis <- function(dir,file,domain){
+  print(paste0("Processing file ",file))
+  m <- copy(md)
+  #rs <- raster(paste0(dir,file))
+  rs <- raster::stack(paste0(dir,file))
+  extent(rs) = RAP_EXT
+  rs <- projectRaster(rs, RAP.XY)
+  rap.crop <- crop(rs,extent(RAP.XY))
+  vals <- extract(rap.crop,md.spdf)
+  values(m) <- vals
+  y <- list(m)
+  return(y)
+}
+
+# run function
+outlist <- mcmapply(rap2modis, dir=inDIR, file=rl[grep('201901',rl)], domain=city, mc.cores=1)
+outlist1 <-outlist[1]$`C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/origTIFF/`
+plot(outlist1)
+
+names(outlist) <- paste0(substr(rl[grep('201901',rl)],9,16), substr(rl[grep('201901',rl)],18,19))
+outlist <- stack(outlist)
+
+outlist_mean <- mean(outlist)
+plot(outlist_mean, main='RAP January Mean Temperatures')
+
+
+#cnames <- paste0(substr(rl[grep('201901',rl)],9,16), substr(rl[grep('201901',rl)],18,19))
+#st <- stack(outlist)
+#dt <- as.data.table(as.data.frame(st,xy=T))
+#setnames(dt,c('x','y',cnames))
+
+#dm <- melt.data.table(dt,id.vars=c('x','y'),variable.name='datetime',value.name='tempK',variable.factor=F)
+#cat("\n done 1!")
+#dm <- dm[!is.na(tempK)]
+#print("done 2!")
+#setkey(dm,datetime)
+#td <- times[,.(chr,datetime)]
+#td[,datetime:=as.character(datetime)]
+#setkey(td,chr)
+#dm <- td[dm, on = 'datetime']
+
+##xyvals<-as.data.table(as.data.frame(md.spdf))
+##colnames(xyvals)[1]<-"tempK"
+##xyvals$tempK=xyvals$tempK*NA
+
+##rm(md,md.spdf,RAP.XY,RAP_EXT)
+
+##test_agg<-aggregate(outlist,750,fun=mean)
+##plot(test_agg,main='750')
+##plot(outlist)
+
+TA.path <- 'C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ERA5/2019/'
+ERA_fl <- 'era5_2T_data_201901.nc'
+
+#ERA5_outlist <- mcmapply(rap2modis, dir=TA.path, file=ERA_fl, domain=city, mc.cores=1)
+
+
+
+#TA.varname <- c('daymet_v3', '2T')[nn.indx]
+#TS.varname <- c('TSOIL',  'STL1')[nn.indx]
+ERA5 <- raster::stack(paste0(TA.path,ERA_fl))
+names(ERA5) <-paste0(substr(names(ERA5),1,5),substr(names(ERA5),7,8),substr(names(ERA5),10,11),substr(names(ERA5),13,14))
+
+#ERA5_mean <- mean(ERA5)
+#ERA5 <- ERA5$X2019.06.01.00.00.00
+
+ERA5_all_crop <- crop(ERA5,bbox)
+Outlist_all_crop <- crop(outlist,bbox)
+Outlist_all_reproj <-resample(Outlist_all_crop,ERA5_all_crop)
+
+ERA_rast<-Outlist_all_reproj*NA
+for (n in names(Outlist_all_reproj)){
+  ERA_rast[[n]] <- raster::subset(ERA5_all_crop,grep(n,names(ERA5_all_crop),value = T))
+}
+
+ERA_RAP_diff <- ERA_rast-Outlist_all_reproj
+names(ERA_RAP_diff)<-names(Outlist_all_reproj)
+plot(ERA_RAP_diff)
+plot(mean(ERA_RAP_diff), main='ERA5 - RAP average difference, June 2019')
+
+ERA_vals <- values(ERA_rast)
+RAP_vals <- values(Outlist_all_reproj)
+#plot(RAP_vals, ERA_vals, asp=1, xlim=c(275,305),ylim=c(275,305), main='ERA5 vs. RAP Temperature, June 2019')+line(260:325,260:325)
+plot(RAP_vals, ERA_vals, asp=1, xlim=c(245,290),ylim=c(245,290), main='ERA5 vs. RAP Temperature, January 2019',pch=20,cex=0.1,col=alpha('blue',alpha=0.05))+lines(c(240:300),c(240:300),col='red')
+
+#plot(ERA5_mean)
+#ERA5_crop <- crop(ERA5_mean,bbox)
+#plot(ERA5_crop)
+#ERA5_reproj <- resample(ERA5_crop,outlist1,method='ngb')#test_agg)
+#plot(ERA5_reproj)
+
+#plot(ERA5_reproj-outlist1)#test_agg)
+
+#Outlist_reproj <-resample(outlist_mean,ERA5_crop)
+#plot(Outlist_reproj,main='Mean June RAP reprojected')
+
+#plot(ERA5_crop-Outlist_reproj, main='ERA5 - RAP Temperature')
+#mean(values(ERA5_crop-Outlist_reproj))
+#median(values(ERA5_crop-Outlist_reproj))

@@ -1,0 +1,353 @@
+memory.limit(size=5e8)
+library(sp)
+library(raster)
+library(data.table)
+library(gdalUtils)
+library(ellipsis)
+library(ggplot2)
+
+setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/")
+
+evi <- read.csv('driver_data/evi_lswi/evi_lswi_interpolated_ls7and8.csv')
+
+# just select columns with coordinates and index
+evi <- evi[,c('x', 'y', 'Index')]
+
+In<-NULL
+Inx<-NULL
+Iny<-NULL
+
+'%notin%' <- Negate('%in%')
+
+for (i in 1:length(evi$Index)){
+  if (length(In)==0){
+    In<-evi$Index[i]
+    Inx<-evi$x[i]
+    Iny<-evi$y[i]
+  }else if(evi$Index[i] %notin% In){
+    In<-append(In, evi$Index[i])
+    Inx<-append(Inx, evi$x[i])
+    Iny<-append(Iny, evi$y[i])
+  }
+}
+
+vprm <- read.csv('vprm_30m_nist.csv')
+
+Index_xy <- data.frame(
+  Index = In,
+  x = Inx,
+  y= Iny,
+  stringsAsFactors = FALSE
+)
+
+#summer (JJA)
+HoY1<-vprm$HoY[vprm$HoY<5832]
+HOY2<-HoY1[HoY1>=3624]
+GEE1<-vprm$GEE[vprm$HoY<5832]
+GEE2<-GEE1[HoY1>=3624]
+Re1<-vprm$Re[vprm$HoY<5832]
+Re2<-Re1[HoY1>=3624]
+Index1<-vprm$Index[vprm$HoY<5832]
+Index2<-Index1[HoY1>=3624]
+
+x0<-array(data=NA, dim=(c(10556,2210)))
+y0<-array(data=NA, dim=(c(10556,2210)))
+Re0<-array(data=NA, dim=(c(10556,2210)))
+GEE0<-array(data=NA, dim=(c(10556,2210)))
+Index0<-array(data=NA, dim=(c(10556,2210)))
+g<-0
+
+for (I in 1:length(Index2)){
+  x0[Index2[I],HOY2[I]-3623]<-Index_xy$x[Index2[I]]
+  y0[Index2[I],HOY2[I]-3623]<-Index_xy$y[Index2[I]]
+  GEE0[Index2[I],HOY2[I]-3623]<-GEE2[I]
+  Re0[Index2[I],HOY2[I]-3623]<-Re2[I]
+  Index0[Index2[I],HOY2[I]-3623]<-Index2[I]
+  if (I/length(Index2)>g/100){
+    print(g)
+    g<-g+1
+  }
+}
+
+GEE_mean<-rowMeans(GEE0, na.rm=TRUE, dim=1)
+x_mean<-rowMeans(x0, na.rm=TRUE, dim=1)
+y_mean<-rowMeans(y0, na.rm=TRUE, dim=1)
+Re_mean<-rowMeans(Re0, na.rm=TRUE, dim=1)
+Index_mean<-rowMeans(Index0, na.rm=TRUE, dim=1)
+
+All.data <- data.frame(
+  x = x_mean, 
+  y = y_mean,
+  GEE = GEE_mean,
+  Re =Re_mean,
+  #Ra =Ra.stk[-length(x.stk)],
+  #Rh =Rh.stk[-length(x.stk)],
+  #TScale =TScale.stk[-length(x.stk)],
+  #PScale =PScale.stk[-length(x.stk)],
+  #WScale =WScale.stk[-length(x.stk)],
+  #PAR = PAR.stk[-length(x.stk)],
+  #Tair = Tair.stk[-length(x.stk)],
+  #HoY = HoY.stk[-length(x.stk)],
+  #EVI =EVI_scale.stk[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+sincrs <- '+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+s <- SpatialPoints(cbind(All.data$x, All.data$y), proj4string=CRS(sincrs))
+
+lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+coords <- spTransform(s, lonlat)
+GEE_xy_data<-cbind(as.data.frame(coords), All.data$GEE,All.data$Re)
+
+
+GEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = All.data$GEE)) + geom_point()+coord_equal()
+print(GEEplot)
+
+Replot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = All.data$Re)) + geom_point()+coord_equal()
+print(Replot)
+
+NEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = All.data$Re-All.data$GEE)) + geom_point()+coord_equal()
+print(NEEplot)
+
+mean(All.data$GEE, na.rm=TRUE)*12*10^(-6)*10000*3600*24*92/(10^6)
+mean(All.data$Re)*12*10^(-6)*10000*3600*24*92/(10^6)
+mean(All.data$Re - All.data$GEE, na.rm=TRUE)*12*10^(-6)*10000*3600*24*92/(10^6)
+
+#spring (MAM)
+HoY1<-vprm$HoY[vprm$HoY<3624]
+HOY2<-HoY1[HoY1>=1416]
+GEE1<-vprm$GEE[vprm$HoY<3624]
+GEE2<-GEE1[HoY1>=1416]
+Re1<-vprm$Re[vprm$HoY<3624]
+Re2<-Re1[HoY1>=1416]
+Index1<-vprm$Index[vprm$HoY<3624]
+Index2<-Index1[HoY1>=1416]
+
+x0<-array(data=NA, dim=(c(10556,2210)))
+y0<-array(data=NA, dim=(c(10556,2210)))
+Re0<-array(data=NA, dim=(c(10556,2210)))
+GEE0<-array(data=NA, dim=(c(10556,2210)))
+Index0<-array(data=NA, dim=(c(10556,2210)))
+g<-0
+
+for (I in 1:length(Index2)){
+  x0[Index2[I],HOY2[I]-1415]<-Index_xy$x[Index2[I]]
+  y0[Index2[I],HOY2[I]-1415]<-Index_xy$y[Index2[I]]
+  GEE0[Index2[I],HOY2[I]-1415]<-GEE2[I]
+  Re0[Index2[I],HOY2[I]-1415]<-Re2[I]
+  Index0[Index2[I],HOY2[I]-1415]<-Index2[I]
+  if (I/length(Index2)>g/100){
+    print(g)
+    g<-g+1
+  }
+}
+
+GEE_mean<-rowMeans(GEE0, na.rm=TRUE, dim=1)
+x_mean<-rowMeans(x0, na.rm=TRUE, dim=1)
+y_mean<-rowMeans(y0, na.rm=TRUE, dim=1)
+Re_mean<-rowMeans(Re0, na.rm=TRUE, dim=1)
+Index_mean<-rowMeans(Index0, na.rm=TRUE, dim=1)
+
+AllMAM.data <- data.frame(
+  x = x_mean, 
+  y = y_mean,
+  GEE = GEE_mean,
+  Re =Re_mean,
+  #Ra =Ra.stk[-length(x.stk)],
+  #Rh =Rh.stk[-length(x.stk)],
+  #TScale =TScale.stk[-length(x.stk)],
+  #PScale =PScale.stk[-length(x.stk)],
+  #WScale =WScale.stk[-length(x.stk)],
+  #PAR = PAR.stk[-length(x.stk)],
+  #Tair = Tair.stk[-length(x.stk)],
+  #HoY = HoY.stk[-length(x.stk)],
+  #EVI =EVI_scale.stk[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+sincrs <- '+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+s <- SpatialPoints(cbind(AllMAM.data$x, AllMAM.data$y), proj4string=CRS(sincrs))
+
+lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+coords <- spTransform(s, lonlat)
+GEE_xy_data<-cbind(as.data.frame(coords), AllMAM.data$GEE,AllMAM.data$Re)
+
+
+GEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = AllMAM.data$GEE)) + geom_point()+coord_equal()
+print(GEEplot)
+
+Replot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+               aes(x = coords.x1, 
+                   y = coords.x2,
+                   col = AllMAM.data$Re)) + geom_point()+coord_equal()
+print(Replot)
+
+NEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = AllMAM.data$Re-AllMAM.data$GEE)) + geom_point()+coord_equal()
+print(NEEplot)
+
+mean(AllMAM.data$GEE, na.rm=TRUE)*12*10^(-6)*10000*3600*24*365/(10^6)*3/12
+mean(AllMAM.data$Re,na.rm=TRUE)*12*10^(-6)*10000*3600*24*365/(10^6)*3/12
+mean(AllMAM.data$Re - AllMAM.data$GEE, na.rm=TRUE)*3.78432*3/12
+
+
+#Autumn (SON)
+HoY1<-vprm$HoY[vprm$HoY<8016]
+HOY2<-HoY1[HoY1>=5832]
+GEE1<-vprm$GEE[vprm$HoY<8016]
+GEE2<-GEE1[HoY1>=5832]
+Re1<-vprm$Re[vprm$HoY<8016]
+Re2<-Re1[HoY1>=5832]
+Index1<-vprm$Index[vprm$HoY<8016]
+Index2<-Index1[HoY1>=5832]
+
+x0<-array(data=NA, dim=(c(10556,2185)))
+y0<-array(data=NA, dim=(c(10556,2185)))
+Re0<-array(data=NA, dim=(c(10556,2185)))
+GEE0<-array(data=NA, dim=(c(10556,2185)))
+Index0<-array(data=NA, dim=(c(10556,2185)))
+g<-0
+
+for (I in 1:length(Index2)){
+  x0[Index2[I],HOY2[I]-5831]<-Index_xy$x[Index2[I]]
+  y0[Index2[I],HOY2[I]-5831]<-Index_xy$y[Index2[I]]
+  GEE0[Index2[I],HOY2[I]-5831]<-GEE2[I]
+  Re0[Index2[I],HOY2[I]-5831]<-Re2[I]
+  Index0[Index2[I],HOY2[I]-5831]<-Index2[I]
+  if (I/length(Index2)>g/100){
+    print(g)
+    g<-g+1
+  }
+}
+
+GEE_mean<-rowMeans(GEE0, na.rm=TRUE, dim=1)
+x_mean<-rowMeans(x0, na.rm=TRUE, dim=1)
+y_mean<-rowMeans(y0, na.rm=TRUE, dim=1)
+Re_mean<-rowMeans(Re0, na.rm=TRUE, dim=1)
+Index_mean<-rowMeans(Index0, na.rm=TRUE, dim=1)
+
+AllSON.data <- data.frame(
+  x = x_mean, 
+  y = y_mean,
+  GEE = GEE_mean,
+  Re =Re_mean,
+  #Ra =Ra.stk[-length(x.stk)],
+  #Rh =Rh.stk[-length(x.stk)],
+  #TScale =TScale.stk[-length(x.stk)],
+  #PScale =PScale.stk[-length(x.stk)],
+  #WScale =WScale.stk[-length(x.stk)],
+  #PAR = PAR.stk[-length(x.stk)],
+  #Tair = Tair.stk[-length(x.stk)],
+  #HoY = HoY.stk[-length(x.stk)],
+  #EVI =EVI_scale.stk[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+sincrs <- '+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+s <- SpatialPoints(cbind(AllSON.data$x, AllSON.data$y), proj4string=CRS(sincrs))
+
+lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+coords <- spTransform(s, lonlat)
+GEE_xy_data<-cbind(as.data.frame(coords), AllSON.data$GEE,AllSON.data$Re)
+
+
+GEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = AllSON.data$GEE)) + geom_point()+coord_equal()
+print(GEEplot)
+
+Replot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+               aes(x = coords.x1, 
+                   y = coords.x2,
+                   col = AllSON.data$Re)) + geom_point()+coord_equal()
+print(Replot)
+
+NEEplot<-ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = AllSON.data$Re-AllSON.data$GEE)) + geom_point()+coord_equal()
+print(NEEplot)
+
+mean(AllSON.data$GEE, na.rm=TRUE)*12*10^(-6)*10000*3600*24*91/(10^6)
+mean(AllSON.data$Re)*12*10^(-6)*10000*3600*24*91/(10^6)
+mean(AllSON.data$Re - AllSON.data$GEE, na.rm=TRUE)*12*10^(-6)*10000*3600*24*91/(10^6)
+
+
+
+
+
+xf1<-All.data$x[All.data$x<308510]
+xf2<-xf1[xf1>307360]
+GEEf1<-All.data$GEE[All.data$x<308510]
+GEEf2<-GEEf1[xf1>307360]
+Ref1<-All.data$Re[All.data$x<308510]
+Ref2<-Ref1[xf1>307360]
+yf1<-All.data$y[All.data$x<308510]
+yf2<-yf1[xf1>307360]
+yf21<-yf2[yf2<4333810]
+yf22<-yf21[yf21>4332510]
+GEEf21<-GEEf2[yf2<4333810]
+GEEf22<-GEEf21[yf21>4332510]
+Ref21<-Ref2[yf2<4333810]
+Ref22<-Ref21[yf21>4332510]
+xf21<-xf2[yf2<4333810]
+xf22<-xf21[yf21>4332510]
+
+f.data <- data.frame(
+  x = xf22, 
+  y = yf22,
+  GEE = GEEf22,
+  Re =Ref22
+)
+
+sincrs <- '+proj=utm +zone=18 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+f <- SpatialPoints(cbind(f.data$x, f.data$y), proj4string=CRS(sincrs))
+
+lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+coords <- spTransform(f, lonlat)
+GEE_xy_f_data<-cbind(as.data.frame(coords), f.data$GEE)
+
+GEEfplot<-ggplot(GEE_xy_f_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = f.data$GEE)) + geom_point()+coord_equal()
+print(GEEfplot)
+
+Refplot<-ggplot(GEE_xy_f_data,                       # Draw ggplot2 plot
+                 aes(x = coords.x1, 
+                     y = coords.x2,
+                     col = f.data$Re)) + geom_point()+coord_equal()
+print(Refplot)
+
+NEEfplot<-ggplot(GEE_xy_f_data,                       # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = f.data$Re -f.data$GEE)) + geom_point()+coord_equal()
+print(NEEfplot)
+
+mean(f.data$GEE)*3.78432*3/12
+mean(f.data$Re)*3.78432*3/12
+mean(f.data$Re - f.data$GEE)*3.78432*3/12

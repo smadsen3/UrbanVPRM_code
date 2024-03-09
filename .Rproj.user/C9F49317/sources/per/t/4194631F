@@ -1,0 +1,26 @@
+{
+    "id": "4194631F",
+    "path": "~/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/UrbanVPRM_code/processLC_ISA_script1.R",
+    "project_path": "processLC_ISA_script1.R",
+    "type": "r_source",
+    "hash": "90834340",
+    "contents": "",
+    "dirty": false,
+    "created": 1641927761829.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "98,0",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1709996662,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1709996662,
+    "read_only": false,
+    "read_only_alternatives": []
+}

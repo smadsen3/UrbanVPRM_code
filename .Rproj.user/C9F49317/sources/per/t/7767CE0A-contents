@@ -1,0 +1,871 @@
+memory.limit(size=5e8)
+library(sp)
+library(raster)
+library(data.table)
+library(gdalUtils)
+library(ellipsis)
+library(ggplot2)
+
+setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/")
+
+# import evi data
+evi <- read.csv('GTA_500m/adjusted_evi_lswi_interpolated_modis_snow_removed.csv')
+
+evi_inter<-evi[,c('x', 'y', 'Index', 'DOY','EVI_inter','LSWI_inter')]
+# just select columns with coordinates and index
+#evi <- evi[,c('x', 'y', 'Index')]
+
+# create raster from data
+#evi_inter_r<-rasterFromXYZ(evi_inter)
+evi_r <- rasterFromXYZ(evi_inter)
+
+# assign crs of raster given crs of landsat data with which it was created
+crs(evi_r) <- '+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#crs(evi_r) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+#plot(evi_inter_r)
+# plot values (this looks like a gradient since it is just the pixel indices, but would look like real data if you did something like evi <- evi[,c('x', 'y', 'EVI_inter')] instead)
+plot(evi_r$EVI_inter)
+
+rm(evi_inter)
+rm(evi_r)#,evi_0)
+
+#My code below
+#x.stk<-NULL
+#y.stk<-NULL
+#Date.stk <- NULL
+#EVI.stk <- NULL
+#EVI_inter.stk<-NULL
+#Index.stk<-NULL
+#LSWI.stk<-NULL
+#LSWI_inter.stk<-NULL
+
+#for (I in 1:length(evi$Index)){
+#  if (141<evi$DOY[I] & evi$DOY[I]<150){
+#    if (length(x.stk)==0){
+#      x.stk <- evi$x[I] 
+#      y.stk <- evi$y[I]
+#      Date.stk <- evi$DOY[I]
+#      EVI.stk <- evi$EVI[I]
+#      EVI_inter.stk <- evi$EVI_inter[I]
+#      Index.stk<-evi$Index[I]
+#      LSWI.stk <- evi$LSWI[I]
+#      LSWI_inter.stk<-evi$LSWI_inter[I]
+#    } else {
+#      x.stk <- append(x.stk, evi$x[I])
+#      y.stk <- append(y.stk, evi$y[I])
+#      Date.stk <- append(Date.stk, evi$DOY[I])
+#      EVI.stk <-append(EVI.stk, evi$EVI[I])
+#      EVI_inter.stk <- append(EVI_inter.stk, evi$EVI_inter[I])
+#      Index.stk <-append(Index.stk,evi$Index[I])
+#      LSWI.stk <- append(LSWI.stk,evi$LSWI[I])
+#      LSWI_inter.stk <- append(LSWI_inter.stk,evi$LSWI_inter[I])
+#    }
+#  }
+#}
+
+#All.data.evi <- data.frame(
+#  Index = Index.stk[-length(x.stk)],
+#  x = x.stk[-length(x.stk)], 
+#  y = y.stk[-length(x.stk)],
+#  EVI =EVI.stk[-length(x.stk)],
+#  LSWI = LSWI.stk[-length(x.stk)],
+#  EVI_inter =EVI_inter.stk[-length(x.stk)],
+#  LSWI_inter = LSWI_inter.stk[-length(x.stk)],
+#  stringsAsFactors = FALSE
+#)
+
+#sincrs <- '+proj=utm +zone=17 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#s <- SpatialPoints(cbind(All.data.evi$x, All.data.evi$y), proj4string=CRS(sincrs))
+
+#lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+#coords <- spTransform(s, lonlat)
+#evi_xy_data<-cbind(as.data.frame(coords), All.data.evi$EVI,All.data.evi$LSWI,All.data.evi$EVI_inter, All.data.evi$LSWI_inter)
+
+#ggplot(evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$EVI_inter)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Interpolated EVI (DOY = 142-150)')
+
+#ggplot(evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi$LSWI_inter)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Interpolated LSWI (DOY = 142-150)')
+
+#evix.stk<-x.stk[is.na(EVI.stk)==FALSE]
+#eviy.stk<-y.stk[is.na(EVI.stk)==FALSE]
+#eviEVI.stk<-EVI.stk[is.na(EVI.stk)==FALSE]
+#eviLSWI.stk<-LSWI.stk[is.na(EVI.stk)==FALSE]
+#length(eviEVI.stk)
+
+#All.data.evi_og <- data.frame(
+#  x = evix.stk, 
+#  y = eviy.stk,
+#  EVI =eviEVI.stk,
+#  LSWI =eviLSWI.stk,
+#  stringsAsFactors = FALSE
+#)
+
+#evis <- SpatialPoints(cbind(All.data.evi_og$x, All.data.evi_og$y), proj4string=CRS(sincrs))
+#evicoords <- spTransform(evis, lonlat)
+#og_evi_xy_data<-cbind(as.data.frame(evicoords), All.data.evi_og$EVI, All.data.evi_og$LSWI)
+
+#ggplot(og_evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi_og$EVI)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden EVI (DOY = 142-150)')
+
+#ggplot(og_evi_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, y = coords.x2, width=3.8*10^(-4),
+#           height=2.75*10^(-4))) + geom_tile(aes(fill=All.data.evi_og$LSWI)) + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden LSWI (DOY = 125-150)')
+
+
+#rm(vprm)
+
+
+In_DOY0<-NULL
+In_evi0<-NULL
+In_lswi0<-NULL
+In_evi_inter0<-NULL
+In_lswi_inter0<-NULL
+
+In_DOY<-NULL
+In_evi<-NULL
+In_lswi<-NULL
+In_evi_inter<-NULL
+In_lswi_inter<-NULL
+
+In_DOY2<-NULL
+In_evi2<-NULL
+In_lswi2<-NULL
+In_evi_inter2<-NULL
+In_lswi_inter2<-NULL
+
+In_DOY3<-NULL
+In_evi3<-NULL
+In_lswi3<-NULL
+In_evi_inter3<-NULL
+In_lswi_inter3<-NULL
+
+'%notin%' <- Negate('%in%')
+
+for (i in 1:length(evi$Index)){
+  #if (evi$DOY[i] < 150 & evi$DOY[i] > 100){
+  if (evi$Index[i]==40){#854){
+    if (length(In_DOY)==0){
+      #In<-evi$Index[i]
+      #Inx<-evi$x[i]
+      #Iny<-evi$y[i]
+      In_DOY<-evi$DOY[i]
+      In_evi<-evi$EVI[i]
+      In_lswi<-evi$LSWI[i]
+      In_evi_inter<-evi$EVI_inter[i]
+      In_lswi_inter<-evi$LSWI_inter[i]
+    }else {#if(evi$Index[i] %notin% In){
+      #In<-append(In, evi$Index[i])
+      #Inx<-append(Inx, evi$x[i])
+      #Iny<-append(Iny, evi$y[i])
+      In_DOY<-append(In_DOY, evi$DOY[i])
+      In_evi<-append(In_evi, evi$EVI[i])
+      In_lswi<-append(In_lswi, evi$LSWI[i])
+      In_evi_inter<-append(In_evi_inter, evi$EVI_inter[i])
+      In_lswi_inter<-append(In_lswi_inter, evi$LSWI_inter[i])
+    }
+  }else if (evi$Index[i]==3955){#104){#955){
+    if (length(In_DOY0)==0){
+      #In<-evi$Index[i]
+      #Inx<-evi$x[i]
+      #Iny<-evi$y[i]
+      In_DOY0<-evi$DOY[i]
+      In_evi0<-evi$EVI[i]
+      In_lswi0<-evi$LSWI[i]
+      In_evi_inter0<-evi$EVI_inter[i]
+      In_lswi_inter0<-evi$LSWI_inter[i]
+    }else {#if(evi$Index[i] %notin% In){
+      #In<-append(In, evi$Index[i])
+      #Inx<-append(Inx, evi$x[i])
+      #Iny<-append(Iny, evi$y[i])
+      In_DOY0<-append(In_DOY0, evi$DOY[i])
+      In_evi0<-append(In_evi0, evi$EVI[i])
+      In_lswi0<-append(In_lswi0, evi$LSWI[i])
+      In_evi_inter0<-append(In_evi_inter0, evi$EVI_inter[i])
+      In_lswi_inter0<-append(In_lswi_inter0, evi$LSWI_inter[i])
+    }
+  }else if (evi$Index[i]==6510){ #170){#856){
+    if (length(In_DOY2)==0){
+      #In2<-evi$Index[i]
+      #Inx2<-evi$x[i]
+      #Iny2<-evi$y[i]
+      In_DOY2<-evi$DOY[i]
+      In_evi2<-evi$EVI[i]
+      In_lswi2<-evi$LSWI[i]
+      In_evi_inter2<-evi$EVI_inter[i]
+      In_lswi_inter2<-evi$LSWI_inter[i]
+    }else {#if(evi$Index[i] %notin% In){
+      #In2<-append(In2, evi$Index[i])
+      #Inx2<-append(Inx2, evi$x[i])
+      #Iny2<-append(Iny2, evi$y[i])
+      In_DOY2<-append(In_DOY2, evi$DOY[i])
+      In_evi2<-append(In_evi2, evi$EVI[i])
+      In_lswi2<-append(In_lswi2, evi$LSWI[i])
+      In_evi_inter2<-append(In_evi_inter2, evi$EVI_inter[i])
+      In_lswi_inter2<-append(In_lswi_inter2, evi$LSWI_inter[i])
+    }
+  }else if (evi$Index[i]==8412){#200){#858){
+    if (length(In_DOY3)==0){
+      #In2<-evi$Index[i]
+      #Inx2<-evi$x[i]
+      #Iny2<-evi$y[i]
+      In_DOY3<-evi$DOY[i]
+      In_evi3<-evi$EVI[i]
+      In_lswi3<-evi$LSWI[i]
+      In_evi_inter3<-evi$EVI_inter[i]
+      In_lswi_inter3<-evi$LSWI_inter[i]
+    }else {#if(evi$Index[i] %notin% In){
+      #In2<-append(In2, evi$Index[i])
+      #Inx2<-append(Inx2, evi$x[i])
+      #Iny2<-append(Iny2, evi$y[i])
+      In_DOY3<-append(In_DOY3, evi$DOY[i])
+      In_evi3<-append(In_evi3, evi$EVI[i])
+      In_lswi3<-append(In_lswi3, evi$LSWI[i])
+      In_evi_inter3<-append(In_evi_inter3, evi$EVI_inter[i])
+      In_lswi_inter3<-append(In_lswi_inter3, evi$LSWI_inter[i])
+    }
+  }
+}
+
+Index_DOY0 <- data.frame(
+  #Index = In[-length(In)],
+  #x = Inx[-length(In)],
+  #y = Iny[-length(In)],
+  DOY = In_DOY0[-length(In_DOY0)],
+  evi = In_evi0[-length(In_DOY0)],
+  lswi = In_lswi0[-length(In_DOY0)],
+  evi_inter = In_evi_inter0[-length(In_DOY0)],
+  lswi_inter = In_lswi_inter0[-length(In_DOY0)],
+  stringsAsFactors = FALSE
+)
+
+Index_DOY <- data.frame(
+  #Index = In[-length(In)],
+  #x = Inx[-length(In)],
+  #y = Iny[-length(In)],
+  DOY = In_DOY[-length(In_DOY)],
+  evi = In_evi[-length(In_DOY)],
+  lswi = In_lswi[-length(In_DOY)],
+  evi_inter = In_evi_inter[-length(In_DOY)],
+  lswi_inter = In_lswi_inter[-length(In_DOY)],
+  stringsAsFactors = FALSE
+)
+
+Index_DOY2 <- data.frame(
+  #Index = In[-length(In)],
+  #x = Inx[-length(In)],
+  #y = Iny[-length(In)],
+  DOY = In_DOY2[-length(In_DOY2)],
+  evi = In_evi2[-length(In_DOY2)],
+  lswi = In_lswi2[-length(In_DOY2)],
+  evi_inter = In_evi_inter2[-length(In_DOY2)],
+  lswi_inter = In_lswi_inter2[-length(In_DOY2)],
+  stringsAsFactors = FALSE
+)
+
+Index_DOY3 <- data.frame(
+  #Index = In[-length(In)],
+  #x = Inx[-length(In)],
+  #y = Iny[-length(In)],
+  DOY = In_DOY3[-length(In_DOY3)],
+  evi = In_evi3[-length(In_DOY3)],
+  lswi = In_lswi3[-length(In_DOY3)],
+  evi_inter = In_evi_inter3[-length(In_DOY3)],
+  lswi_inter = In_lswi_inter3[-length(In_DOY3)],
+  stringsAsFactors = FALSE
+)
+
+EVI_data_853 <- data.frame(x = Index_DOY0$DOY, y = Index_DOY0$evi, stringsAsFactors = FALSE)
+plot(EVI_data_853)
+EVI_inter_data_853 <- data.frame(x = Index_DOY0$DOY, y = Index_DOY0$evi_inter, stringsAsFactors = FALSE)
+plot(EVI_inter_data_853, type='l')
+
+EVI_data_854 <- data.frame(x = Index_DOY$DOY, y = Index_DOY$evi, stringsAsFactors = FALSE)
+plot(EVI_data_854)
+EVI_inter_data_854 <- data.frame(x = Index_DOY$DOY, y = Index_DOY$evi_inter, stringsAsFactors = FALSE)
+plot(EVI_inter_data_854, type='l')
+
+EVI_inter_data_856 <- data.frame(x = Index_DOY2$DOY, y = Index_DOY2$evi_inter, stringsAsFactors = FALSE)
+plot(EVI_inter_data_856, type='l')
+EVI_data_856 <- data.frame(x = Index_DOY2$DOY, y = Index_DOY2$evi, stringsAsFactors = FALSE)
+plot(EVI_data_856)
+
+EVI_inter_data_858 <- data.frame(x = Index_DOY3$DOY, y = Index_DOY3$evi_inter, stringsAsFactors = FALSE)
+plot(EVI_inter_data_858, type='l')
+EVI_data_858 <- data.frame(x = Index_DOY3$DOY, y = Index_DOY3$evi, stringsAsFactors = FALSE)
+plot(EVI_data_858)
+
+ggplot(EVI_data_854,
+       aes(x=x, y=y,colour='(-79.535,43.898)'))+geom_point(aes(colour='(-79.535,43.898)'))+geom_line(data=EVI_inter_data_854,
+                                                                           aes(x=x,y=y,colour='(-79.535,43.898)'))+geom_point(data=EVI_data_853,aes(x=x,y=y,colour='(-79.423,43.785)'))+geom_line(data=EVI_inter_data_853,aes(x=x,y=y,colour='(-79.423,43.785)'))+geom_point(data=EVI_data_856,aes(x=x,y=y,colour='(-79.577,43.710)'))+geom_line(data=EVI_inter_data_856,aes(x=x,y=y,colour='(-79.577,43.710)'))+geom_point(data=EVI_data_858,aes(x=x,y=y,colour='(-79.452,43.656)'))+geom_line(data=EVI_inter_data_858,aes(x=x,y=y,colour='(-79.452,43.656)'))+ggtitle('Interpolated EVI GTA')+xlab('Day of Year')+ylab('EVI')#+scale_color_manual(labels=c('non-streak','streak'), values=c('red','blue'))
+
+
+LSWI_data_853 <- data.frame(x = Index_DOY0$DOY, y = Index_DOY0$lswi, stringsAsFactors = FALSE)
+plot(LSWI_data_853)
+LSWI_inter_data_853<- data.frame(x = Index_DOY0$DOY, y = Index_DOY0$lswi_inter, stringsAsFactors = FALSE)
+plot(LSWI_inter_data_853, type='l')
+
+LSWI_data_854 <- data.frame(x = Index_DOY$DOY, y = Index_DOY$lswi, stringsAsFactors = FALSE)
+plot(LSWI_data_854)
+LSWI_inter_data_854 <- data.frame(x = Index_DOY$DOY, y = Index_DOY$lswi_inter, stringsAsFactors = FALSE)
+plot(LSWI_inter_data_854, type='l')
+
+LSWI_inter_data_856 <- data.frame(x = Index_DOY2$DOY, y = Index_DOY2$lswi_inter, stringsAsFactors = FALSE)
+plot(LSWI_inter_data_856, type='l')
+
+LSWI_data_856 <- data.frame(x = Index_DOY2$DOY, y = Index_DOY2$lswi, stringsAsFactors = FALSE)
+plot(LSWI_data_856)
+
+LSWI_inter_data_858 <- data.frame(x = Index_DOY3$DOY, y = Index_DOY3$lswi_inter, stringsAsFactors = FALSE)
+plot(LSWI_inter_data_858, type='l')
+
+LSWI_data_858 <- data.frame(x = Index_DOY3$DOY, y = Index_DOY3$lswi, stringsAsFactors = FALSE)
+plot(LSWI_data_858)
+
+ggplot(LSWI_data_854,
+       aes(x=x, y=y,colour='(-79.535,43.898)'))+geom_point(aes(colour='(-79.535,43.898)'))+geom_line(data=LSWI_inter_data_854,
+                                                                                                     aes(x=x,y=y,colour='(-79.535,43.898)'))+geom_point(data=LSWI_data_853,aes(x=x,y=y,colour='(-79.423,43.785)'))+geom_line(data=LSWI_inter_data_853,aes(x=x,y=y,colour='(-79.423,43.785)'))+geom_point(data=LSWI_data_856,aes(x=x,y=y,colour='(-79.577,43.710)'))+geom_line(data=LSWI_inter_data_856,aes(x=x,y=y,colour='(-79.577,43.710)'))+geom_point(data=LSWI_data_858,aes(x=x,y=y,colour='(-79.452,43.656)'))+geom_line(data=LSWI_inter_data_858,aes(x=x,y=y,colour='(-79.452,43.656)'))+ggtitle('Interpolated LSWI GTA')+xlab('Day of Year')+ylab('EVI')#+scale_color_manual(labels=c('non-streak','streak'), values=c('red','blue'))
+
+
+#Index_xy <- data.frame(
+#  Index = In[-length(In)],
+#  x = Inx[-length(In)],
+#  y = Iny[-length(In)],
+#  evi = In_evi[-length(In)],
+#  lswi = In_lswi[-length(In)],
+#  evi_inter = In_evi_inter[-length(In)],
+#  lswi_inter = In_lswi_inter[-length(In)],
+#  stringsAsFactors = FALSE
+#)
+
+##sincrs <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+#coords <- SpatialPoints(cbind(Index_xy$x[is.na(Index_xy$evi)==FALSE], Index_xy$y[is.na(Index_xy$evi)==FALSE]), proj4string=CRS(sincrs))
+
+##lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+##Index_xy$evi[Index_xy$evi==10] <- NA
+##Index_xy$evi[is.na(Index_xy$evi)] <- 10
+##coords <- spTransform(s, lonlat)
+##GEE_xy_data.SOLRIS<-cbind(as.data.frame(coords), All.data.SOLRIS$GEE,All.data.SOLRIS$Re,All.data.SOLRIS$EVI)
+#Index_xy_data<-cbind(as.data.frame(coords), Index_xy$evi[is.na(Index_xy$evi)==FALSE],
+#                     Index_xy$lswi[is.na(Index_xy$evi)==FALSE],
+#                     Index_xy$evi_inter[is.na(Index_xy$evi)==FALSE], 
+#                     Index_xy$lswi_inter[is.na(Index_xy$evi)==FALSE])
+#names(Index_xy_data)<-c('x','y','evi','lswi','evi_inter','lswi_inter')
+
+
+
+#coords2 <- SpatialPoints(cbind(584760, 4909170), proj4string=CRS(sincrs))
+###coords3 <- spTransform(s3, lonlat)
+
+#p=as.data.frame(coords2)
+#names(p)<-c('x','y')
+
+#coords3 <- SpatialPoints(cbind(584790, 4909200), proj4string=CRS(sincrs))
+###coords3 <- spTransform(s3, lonlat)
+
+#p2=as.data.frame(coords3)
+#names(p2)<-c('x','y')
+
+#ggplot(Index_xy_data,                       # Draw ggplot2 plot
+#          aes(x = x, y = y, width=30,
+#                height=30)) + geom_tile(aes(fill=evi)) +coord_equal() + ggtitle('TP39 Interpolated EVI (DOY=100-150)') + geom_point(data=p,colour = 'red') + geom_point(data=p2,colour = 'green')
+
+#ggplot(Index_xy_data,                       # Draw ggplot2 plot
+#       aes(x = x, y = y, width=30,
+#           height=30)) + geom_tile( aes(fill=Index_xy_data$evi_inter)) + coord_equal() + ggtitle('TP39 Interpolated EVI (DOY=100-150)')
+
+vprm <- read.csv('vprm_500m_TP39_no_PScale.csv')
+#readRDS('outputs/NIST30/fluxes_NIST30_2018_DBF_block_00005279.rds')
+#vprm_s <- vprm[,c('Index','GEE','Re')]
+
+In<-NULL
+Inx<-NULL
+Iny<-NULL
+
+'%notin%' <- Negate('%in%')
+
+for (i in 1:length(evi$Index)){
+  #if (evi$Index[i]<6000 & evi$Index[i]>5500){
+  if (length(In)==0){
+    In<-evi$Index[i]
+    Inx<-evi$x[i]
+    Iny<-evi$y[i]
+  }else if(evi$Index[i] %notin% In){
+    In<-append(In, evi$Index[i])
+    Inx<-append(Inx, evi$x[i])
+    Iny<-append(Iny, evi$y[i])
+  }
+}
+
+Index_xy <- data.frame(
+  Index = In,
+  x = Inx,
+  y= Iny,
+  stringsAsFactors = FALSE
+)
+
+rm(In,Inx,Iny,evi)
+
+
+
+x.stk<-NULL
+y.stk<-NULL
+Date.stk <- NULL
+HoY.stk <- NULL
+GEE.stk <- NULL
+TScale.stk <- NULL
+PScale.stk <- NULL
+WScale.stk <- NULL
+PAR.stk <- NULL
+Tair.stk <- NULL
+Re.stk <- NULL
+Ra.stk <- NULL
+Rh.stk <- NULL
+EVI_scale.stk <- NULL
+Index.stk<-NULL
+
+for (I in 1:length(vprm$Index)){
+  #if (!is.na(vprm$HoY[I])){
+  #Borden: if (vprm$Index[I]<6000 & vprm$Index[I]>5500){
+  #TPD: if (Index_xy$x[vprm$Index[I]]<536764 & Index_xy$x[vprm$Index[I]]>535764 & Index_xy$y[vprm$Index[I]]<4720912 & Index_xy$y[vprm$Index[I]]>4719912){
+  #Borden: ang=atan2(Index_xy$x[vprm$Index[I]]-552622.839,Index_xy$y[vprm$Index[I]]-4728833.981)
+  #if (ang<0){ang=ang+2*pi}
+  #if (285/180*pi>ang & 20/180*pi<ang){
+  if (128==vprm$Index[I]){ #} & vprm$HoY[I] < 4825){ #this makes it so you only get the first day
+    #print(paste0('theta = ',ang, ', x = ', Index_xy$x[vprm$Index[I]], ', y = ', Index_xy$y[vprm$Index[I]]))
+    #TP39: 
+    #if (Index_xy$x[vprm$Index[I]] <= -80.3574+1/240 & Index_xy$x[vprm$Index[I]]> -80.3574-1/240 & Index_xy$y[vprm$Index[I]]<42.7102+1/240 & Index_xy$y[vprm$Index[I]] >= 42.7102-1/240){
+    #if (Index_xy$x[vprm$Index[I]]<552880 & Index_xy$x[vprm$Index[I]]>552380 & Index_xy$y[vprm$Index[I]]<4729090 & Index_xy$y[vprm$Index[I]]>4728590){
+      #TPD: 
+      #if (Index_xy$x[vprm$Index[I]] < -80.5577+1.5/240 & Index_xy$x[vprm$Index[I]]> -80.5577-1.5/240 & Index_xy$y[vprm$Index[I]]< 42.6353+1.5/240 & Index_xy$y[vprm$Index[I]]> 42.6353-1.5/240){
+      
+      
+    if (length(x.stk)==0){
+      x.stk <- Index_xy$x[vprm$Index[I]] 
+      y.stk <- Index_xy$y[vprm$Index[I]]
+      Date.stk <- vprm$Date[I]
+      HoY.stk <- vprm$HoY[I]
+      GEE.stk   <- vprm$GEE[I]
+      TScale.stk <- vprm$TScale[I]
+      PScale.stk <- vprm$PScale[I]
+      WScale.stk <- vprm$WScale[I]
+      PAR.stk <- vprm$PAR[I]
+      Tair.stk <- vprm$Tair[I]
+      Re.stk <- vprm$Re[I]
+      Ra.stk <- vprm$Ra[I]
+      Rh.stk <- vprm$Rh[I]
+      EVI_scale.stk <- vprm$EVI_scale[I]
+      Index.stk<-vprm$Index[I]
+      #  angle.stk<-ang
+    } else {
+      x.stk <- append(x.stk, Index_xy$x[vprm$Index[I]])
+      y.stk <- append(y.stk, Index_xy$y[vprm$Index[I]])
+      Date.stk <- append(Date.stk, vprm$Date[I])
+      HoY.stk <- append(HoY.stk, vprm$HoY[I])
+      GEE.stk   <- append(GEE.stk,  vprm$GEE[I])
+      TScale.stk <- append(TScale.stk, vprm$TScale[I])
+      PScale.stk <- append(PScale.stk, vprm$PScale[I])
+      WScale.stk <- append(WScale.stk, vprm$WScale[I])
+      PAR.stk <- append(PAR.stk, vprm$PAR[I])
+      Tair.stk <- append(Tair.stk, vprm$Tair[I])
+      Re.stk <- append(Re.stk, vprm$Re[I])
+      Ra.stk <- append(Ra.stk, vprm$Ra[I])
+      Rh.stk <- append(Rh.stk, vprm$Rh[I])
+      EVI_scale.stk <- append(EVI_scale.stk, vprm$EVI_scale[I])
+      Index.stk <-append(Index.stk,vprm$Index[I])
+      #  angle.stk<-ang
+    }
+    #print(I)
+  }
+  #}
+}
+
+All.data.MOD <- data.frame(
+  #Index = Index.stk[-length(x.stk)],
+  #x = x.stk[-length(x.stk)], 
+  #y = y.stk[-length(x.stk)],
+  GEE = GEE.stk[-length(x.stk)],
+  Re =Re.stk[-length(x.stk)],
+  Ra = Ra.stk[-length(x.stk)],
+  Rh = Rh.stk[-length(x.stk)],
+  HoY = HoY.stk[-length(x.stk)],
+  T_Scale = TScale.stk[-length(x.stk)],
+  P_Scale = PScale.stk[-length(x.stk)],
+  W_Scale = WScale.stk[-length(x.stk)],
+  EVI_Scale =EVI_scale.stk[-length(x.stk)],
+  Tair = Tair.stk[-length((x.stk))],
+  PAR = PAR.stk[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+GEE <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$GEE/min(All.data.MOD$GEE,na.rm = TRUE), stringsAsFactors = FALSE)
+plot(GEE)
+T_Scale <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$T_Scale, stringsAsFactors = FALSE)
+plot(T_Scale)
+P_Scale <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$P_Scale, stringsAsFactors = FALSE)
+plot(P_Scale)
+W_Scale <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$W_Scale, stringsAsFactors = FALSE)
+plot(W_Scale)
+EVI_Scale <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$EVI_Scale, stringsAsFactors = FALSE)
+plot(EVI_Scale)
+Tair <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$Tair, stringsAsFactors = FALSE)
+plot(Tair)
+PAR <- data.frame(x = All.data.MOD$HoY, y = All.data.MOD$PAR, stringsAsFactors = FALSE)
+plot(PAR)
+#EVI_inter_data_853 <- data.frame(x = Index_DOY0$DOY, y = Index_DOY0$evi_inter, stringsAsFactors = FALSE)
+#plot(EVI_inter_data_853, type='l')
+
+ggplot(GEE,
+       aes(x=x, 
+           y=y,colour='GEE'))+geom_point(aes(colour='GEE'))+geom_point(data=T_Scale,
+                                                                       aes(x=x,
+                                                                           y=y, colour='T Scale'))+geom_point(data=P_Scale,
+                                                                                                              aes(x=x,
+                                                                                                                  y=y, 
+                                                                                                                  colour='P Scale'))+geom_point(data=W_Scale,
+                                                                                                                                                aes(x=x,
+                                                                                                                                                    y=y, 
+                                                                                                                                                    colour='W Scale'))+geom_point(data=EVI_Scale,
+                                                                                                                                                                              aes(x=x,
+                                                                                                                                                                                  y=y,
+                                                                                                                                                                                  colour='EVI Scale'))+ggtitle('TP39')+xlab('Day of Year')#+scale_color_manual(labels=c('EVI Scale','W_Scale','T_Scale','P_Scale','GEE'),
+                                                                                                                                                                                                                                                          #values=c('blue','green','purple','orange','red'))
+
+
+
+
+
+
+
+
+#Need to filter out data to the NW (>285, <20)
+# convert to meters -79.9333+dist*sin(20/180*pi),44.3166700+dist*cos(20/180*pi)
+# -79.9333+dist*sin(285/180*pi),44.3166700+dist*cos(285/180*pi)
+
+# THIS WILL NOT WORK
+# Filter out x < 585065.669+(x-585065.669)*cos(20/180*pi)
+#        and x > 585065.669+(x-585065.669)*cos(285/180*pi)
+# Filter out y < 4907598.898+(y-4907598.898)*sin(20/180*pi)
+#        and y > 4907598.898+(y-4907598.898)*sin(285/180*pi)
+
+# Include if 285/180*pi>theta=atan2(x-x0,y-y0)>20/180*pi
+
+#### CHANGE THE x & y LIMITS BASED ON THE SITE #####
+for (I in 1:length(vprm$Index)){
+  #if (!is.na(vprm$HoY[I])){
+  #Borden: if (vprm$Index[I]<6000 & vprm$Index[I]>5500){
+    #TPD: if (Index_xy$x[vprm$Index[I]]<536764 & Index_xy$x[vprm$Index[I]]>535764 & Index_xy$y[vprm$Index[I]]<4720912 & Index_xy$y[vprm$Index[I]]>4719912){
+    #Borden: ang=atan2(Index_xy$x[vprm$Index[I]]-552622.839,Index_xy$y[vprm$Index[I]]-4728833.981)
+    #if (ang<0){ang=ang+2*pi}
+    #if (285/180*pi>ang & 20/180*pi<ang){
+  if (4820==vprm$HoY[I]){ #} & vprm$HoY[I] < 4825){ #this makes it so you only get the first day
+        #print(paste0('theta = ',ang, ', x = ', Index_xy$x[vprm$Index[I]], ', y = ', Index_xy$y[vprm$Index[I]]))
+    #TP39: 
+    #if (Index_xy$x[vprm$Index[I]] <= -80.3574+1/240 & Index_xy$x[vprm$Index[I]]> -80.3574-1/240 & Index_xy$y[vprm$Index[I]]<42.7102+1/240 & Index_xy$y[vprm$Index[I]] >= 42.7102-1/240){
+    if (Index_xy$x[vprm$Index[I]]<552880 & Index_xy$x[vprm$Index[I]]>552380 & Index_xy$y[vprm$Index[I]]<4729090 & Index_xy$y[vprm$Index[I]]>4728590){
+    #TPD: 
+    #if (Index_xy$x[vprm$Index[I]] < -80.5577+1.5/240 & Index_xy$x[vprm$Index[I]]> -80.5577-1.5/240 & Index_xy$y[vprm$Index[I]]< 42.6353+1.5/240 & Index_xy$y[vprm$Index[I]]> 42.6353-1.5/240){
+      
+      
+      if (length(x.stk)==0){
+        x.stk <- Index_xy$x[vprm$Index[I]] 
+        y.stk <- Index_xy$y[vprm$Index[I]]
+        Date.stk <- vprm$Date[I]
+        HoY.stk <- vprm$HoY[I]
+        GEE.stk   <- vprm$GEE[I]
+        TScale.stk <- vprm$TScale[I]
+        PScale.stk <- vprm$PScale[I]
+        WScale.stk <- vprm$WScale[I]
+        PAR.stk <- vprm$PAR[I]
+        Tair.stk <- vprm$Tair[I]
+        Re.stk <- vprm$Re[I]
+        Ra.stk <- vprm$Ra[I]
+        Rh.stk <- vprm$Rh[I]
+        EVI_scale.stk <- vprm$EVI_scale[I]
+        Index.stk<-vprm$Index[I]
+      #  angle.stk<-ang
+      } else {
+        x.stk <- append(x.stk, Index_xy$x[vprm$Index[I]])
+        y.stk <- append(y.stk, Index_xy$y[vprm$Index[I]])
+        Date.stk <- append(Date.stk, vprm$Date[I])
+        HoY.stk <- append(HoY.stk, vprm$HoY[I])
+        GEE.stk   <- append(GEE.stk,  vprm$GEE[I])
+        TScale.stk <- append(TScale.stk, vprm$TScale[I])
+        PScale.stk <- append(PScale.stk, vprm$PScale[I])
+        WScale.stk <- append(WScale.stk, vprm$WScale[I])
+        PAR.stk <- append(PAR.stk, vprm$PAR[I])
+        Tair.stk <- append(Tair.stk, vprm$Tair[I])
+        Re.stk <- append(Re.stk, vprm$Re[I])
+        Ra.stk <- append(Ra.stk, vprm$Ra[I])
+        Rh.stk <- append(Rh.stk, vprm$Rh[I])
+        EVI_scale.stk <- append(EVI_scale.stk, vprm$EVI_scale[I])
+        Index.stk <-append(Index.stk,vprm$Index[I])
+        #  angle.stk<-ang
+      }
+      print(I)
+    }
+  }
+#}
+}
+
+
+x.stk<-NULL
+y.stk<-NULL
+Date.stk <- NULL
+HoY.stk <- NULL
+GEE.stk <- NULL
+TScale.stk <- NULL
+PScale.stk <- NULL
+WScale.stk <- NULL
+PAR.stk <- NULL
+Tair.stk <- NULL
+Re.stk <- NULL
+Ra.stk <- NULL
+Rh.stk <- NULL
+EVI_scale.stk <- NULL
+Index.stk<-NULL
+angle.stk<-NULL
+
+for (I in 1:length(vprm$Index)){
+  #if (!is.na(vprm$HoY[I])){
+  #Borden: if (vprm$Index[I]<6000 & vprm$Index[I]>5500){
+  #TP39: 
+  #if (Index_xy$x[vprm$Index[I]]<553130 & Index_xy$x[vprm$Index[I]]>552130 & Index_xy$y[vprm$Index[I]]<4729340 & Index_xy$y[vprm$Index[I]]>4728340){
+  #TPD: if (Index_xy$x[vprm$Index[I]]<536764 & Index_xy$x[vprm$Index[I]]>535764 & Index_xy$y[vprm$Index[I]]<4720912 & Index_xy$y[vprm$Index[I]]>4719912){
+  #Borden: ang=atan2(Index_xy$x[vprm$Index[I]]-552622.839,Index_xy$y[vprm$Index[I]]-4728833.981)
+  #if (ang<0){ang=ang+2*pi}
+  #if (285/180*pi>ang & 20/180*pi<ang){
+  if (4820==vprm$HoY[I]){ #} & vprm$HoY[I] < 4825){ #this makes it so you only get the first day
+    #Borden: 
+    if (Index_xy$x[vprm$Index[I]] > -79.9333-1.5/240 & Index_xy$x[vprm$Index[I]] < -79.9333+1.5/240 & Index_xy$y[vprm$Index[I]] > 44.3167-1.5/240 & Index_xy$y[vprm$Index[I]] < 44.3167+1.5/240){
+      #Borden: 
+      ang=atan2(Index_xy$x[vprm$Index[I]]+79.9333,Index_xy$y[vprm$Index[I]]-44.3167)
+      if (ang<0){ang=ang+2*pi}
+      if (285/180*pi>ang & 20/180*pi<ang){
+        print(paste0('theta = ',ang, ', x = ', Index_xy$x[vprm$Index[I]], ', y = ', Index_xy$y[vprm$Index[I]]))
+        
+        if (length(x.stk)==0){
+          x.stk <- Index_xy$x[vprm$Index[I]] 
+          y.stk <- Index_xy$y[vprm$Index[I]]
+          Date.stk <- vprm$Date[I]
+          HoY.stk <- vprm$HoY[I]
+          GEE.stk   <- vprm$GEE[I]
+          TScale.stk <- vprm$TScale[I]
+          PScale.stk <- vprm$PScale[I]
+          WScale.stk <- vprm$WScale[I]
+          PAR.stk <- vprm$PAR[I]
+          Tair.stk <- vprm$Tair[I]
+          Re.stk <- vprm$Re[I]
+          Ra.stk <- vprm$Ra[I]
+          Rh.stk <- vprm$Rh[I]
+          EVI_scale.stk <- vprm$EVI_scale[I]
+          Index.stk<-vprm$Index[I]
+          angle.stk<-ang
+        } else {
+          x.stk <- append(x.stk, Index_xy$x[vprm$Index[I]])
+          y.stk <- append(y.stk, Index_xy$y[vprm$Index[I]])
+          Date.stk <- append(Date.stk, vprm$Date[I])
+          HoY.stk <- append(HoY.stk, vprm$HoY[I])
+          GEE.stk   <- append(GEE.stk,  vprm$GEE[I])
+          TScale.stk <- append(TScale.stk, vprm$TScale[I])
+          PScale.stk <- append(PScale.stk, vprm$PScale[I])
+          WScale.stk <- append(WScale.stk, vprm$WScale[I])
+          PAR.stk <- append(PAR.stk, vprm$PAR[I])
+          Tair.stk <- append(Tair.stk, vprm$Tair[I])
+          Re.stk <- append(Re.stk, vprm$Re[I])
+          Ra.stk <- append(Ra.stk, vprm$Ra[I])
+          Rh.stk <- append(Rh.stk, vprm$Rh[I])
+          EVI_scale.stk <- append(EVI_scale.stk, vprm$EVI_scale[I])
+          Index.stk <-append(Index.stk,vprm$Index[I])
+          angle.stk<-ang
+        }
+      }
+    }
+  }
+}
+
+
+All.data.MOD <- data.frame(
+  Index = Index.stk[-length(x.stk)],
+  x = x.stk[-length(x.stk)], 
+  y = y.stk[-length(x.stk)],
+  GEE = GEE.stk[-length(x.stk)],
+  Re =Re.stk[-length(x.stk)],
+  Ra = Ra.stk[-length(x.stk)],
+  Rh = Rh.stk[-length(x.stk)],
+  HoY = HoY.stk[-length(x.stk)],
+  T_Scale = TScale.stk[-length(x.stk)],
+  P_Scale = PScale.stk[-length(x.stk)],
+  W_Scale = WScale.stk[-length(x.stk)],
+  EVI_Scale =EVI_scale.stk[-length(x.stk)],
+  Tair = Tair.stk[-length((x.stk))],
+  PAR = PAR.stk[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+
+sincrs <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#sincrs <- "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m"
+coords <- SpatialPoints(cbind(All.data.MOD$x, All.data.MOD$y), proj4string=CRS(sincrs))
+
+#lonlat <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0' 
+
+#coords <- spTransform(s, lonlat)
+#GEE_xy_data.SOLRIS<-cbind(as.data.frame(coords), All.data.SOLRIS$GEE,All.data.SOLRIS$Re,All.data.SOLRIS$EVI)
+GEE_xy_data.MOD<-cbind(as.data.frame(coords), All.data.MOD$GEE, All.data.MOD$Re,
+                       All.data.MOD$Ra, All.data.MOD$Rh, All.data.MOD$T_Scale,
+                       All.data.MOD$P_Scale, All.data.MOD$W_Scale, 
+                       All.data.MOD$EVI_Scale, All.data.MOD$Tair,
+                       All.data.MOD$PAR)
+
+
+##s2 <- SpatialPoints(cbind(585065.625, 4907602.230), proj4string=CRS(sincrs))
+##coords2 <- spTransform(s2, lonlat)
+#coords2 <-SpatialPoints(cbind(-79.9333, 44.3167), proj4string=CRS(sincrs))
+#B=as.data.frame(coords2)
+
+coords3 <- SpatialPoints(cbind(-80.35749, 42.7102), proj4string=CRS(sincrs))
+##coords3 <- spTransform(s3, lonlat)
+
+TP39=as.data.frame(coords3)
+
+##s4 <- SpatialPoints(cbind(536263.657, 4720411.583), proj4string=CRS(sincrs))
+##coords4 <- spTransform(s4, lonlat)
+#coords4 <- SpatialPoints(cbind(-80.5577, 42.6353), proj4string=CRS(sincrs))
+#TPD=as.data.frame(coords4)
+
+
+#GEEplot<-ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+#                aes(x = coords.x1, y = coords.x2, width=1/240,
+#                    height=1/240)) + geom_tile(aes(fill=All.data.MOD$GEE)) + scale_fill_gradient2(name='GPP',limits=c(0,60),low='gray20', mid='forestgreen', high='greenyellow',midpoint=30) + geom_point(data=B,colour = 'red') + coord_equal() + xlab(expression(Longitude ^o)) + ylab(expression(Latitude ^o)) + ggtitle('Borden Instantaneous GPP MODIS (T = 3620 hrs)')
+GEEplot<-ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+                aes(x = coords.x1, y = coords.x2, width=30,
+                    height=30)) + geom_tile(aes(fill=All.data.MOD$GEE)) + coord_equal() + ggtitle('TP39 Instantaneous GPP MODIS (T = 3620 hrs)')
+
+print(GEEplot)
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$EVI_Scale)) + ggtitle('Borden Instantaneous EVI Scale MODIS (T = 3620 hrs)') +coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$P_Scale)) + ggtitle('Borden Instantaneous P Scale MODIS (T = 3620 hrs)') +coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$W_Scale)) + ggtitle('Borden Instantaneous W Scale MODIS (T = 3620 hrs)') + coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$Ra)) + ggtitle('Borden Instantaneous Ra MODIS (T = 3620 hrs)') + coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$Rh)) + ggtitle('Borden Instantaneous Rh MODIS (T = 3620 hrs)') + coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$Re)) + ggtitle('Borden Instantaneous Re MODIS (T = 3620 hrs)') + coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.MOD,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           width=1/240,
+           height=1/240)) + geom_tile(aes(fill=All.data.MOD$Re-All.data.MOD$GEE)) + ggtitle('Borden Instantaneous NEE MODIS (T = 3620 hrs)') + coord_equal()+geom_point(data=B,colour = 'red')
+
+
+
+GEEplotSOLRIS<-ggplot(GEE_xy_data.SOLRIS,                    # Draw ggplot2 plot
+                aes(x = coords.x1, 
+                    y = coords.x2,
+                    col = All.data.SOLRIS$GEE)) + geom_point() +geom_point(data=B,colour = 'red') + coord_equal() + ggtitle('Borden Instantaneous GEE SOLRIS (T = 3620 hrs)')
+print(GEEplotSOLRIS)
+
+ggplot(GEE_xy_data.SOLRIS,                    # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.SOLRIS$EVI)) + ggtitle('Borden Instantaneous EVI Scale SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+
+ggplot(GEE_xy_data.SOLRIS,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.SOLRIS$Re)) + ggtitle('Borden Instantaneous Re SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.SOLRIS,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.SOLRIS$Re-All.data.SOLRIS$GEE)) + ggtitle('Borden Instantaneous NEE SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+GEE_dif<-All.data.ACI$GEE-All.data.SOLRIS$GEE
+EVI_dif<-All.data.ACI$EVI-All.data.SOLRIS$EVI
+Re_dif<-All.data.ACI$Re-All.data.SOLRIS$Re
+NEE_dif<-All.data.ACI$Re-All.data.ACI$GEE-All.data.SOLRIS$Re+All.data.SOLRIS$GEE
+HoY_dif<-All.data.ACI$HoY-All.data.SOLRIS$HoY
+
+GEE_dif[abs(GEE_dif)<0.00002]<-NA
+Re_dif[Re_dif==0]<-NA
+NEE_dif[abs(NEE_dif)<0.00002]<-NA
+
+All.data.dif <- data.frame(
+  Index = Index.stk[-length(x.stk)],
+  x = x.stk[-length(x.stk)], 
+  y = y.stk[-length(x.stk)],
+  GEE = GEE_dif[-length(x.stk)],
+  Re =Re_dif[-length(x.stk)],
+  NEE = NEE_dif[-length(x.stk)],
+  HoY = HoY_dif[-length(x.stk)],
+  EVI =EVI_dif[-length(x.stk)],
+  stringsAsFactors = FALSE
+)
+
+GEE_xy_data.dif<-cbind(as.data.frame(coords), All.data.dif$GEE,All.data.dif$Re,All.data.dif$NEE, All.data.dif$EVI)
+
+GEEplotdif<-ggplot(GEE_xy_data.dif,                    # Draw ggplot2 plot
+                      aes(x = coords.x1, 
+                          y = coords.x2,
+                          col = All.data.dif$GEE)) + geom_point() +geom_point(data=B,colour = 'red') + coord_equal() + ggtitle('Borden Instantaneous GEE ACI-SOLRIS (T = 3620 hrs)')
+print(GEEplotdif)
+
+ggplot(GEE_xy_data.dif,                    # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.dif$EVI)) + ggtitle('Borden Instantaneous EVI Scale ACI-SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+
+ggplot(GEE_xy_data.dif,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.dif$Re)) + ggtitle('Borden Instantaneous Re ACI-SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+ggplot(GEE_xy_data.dif,                       # Draw ggplot2 plot
+       aes(x = coords.x1, 
+           y = coords.x2,
+           col = All.data.dif$NEE)) + ggtitle('Borden Instantaneous NEE ACI-SOLRIS (T = 3620 hrs)') + geom_point()+coord_equal()+geom_point(data=B,colour = 'red')
+
+#mean(GEE_xy_data.dif$`All.data.dif$NEE`, na.rm=TRUE)
+
+#ggplot(GEE_xy_data,                       # Draw ggplot2 plot
+#       aes(x = coords.x1, 
+#           y = coords.x2,
+#           col = All.data$Rh)) + geom_point()
