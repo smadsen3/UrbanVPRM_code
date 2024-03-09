@@ -17,7 +17,7 @@ library("shapefiles")
 
 ## Create Directories
 setwd("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files")
-city = 'TPD_V061_500m_2018'
+city = 'GTA_V061_500m_2021'
 print("Create directories for LC data")
 dir.create(paste0(city),showWarnings = FALSE)
 dir.create(paste0(city,"/LandCover"),showWarnings = FALSE)
@@ -44,15 +44,17 @@ MODIS_CRS = '+proj=longlat +datum=WGS84 +no_defs'
 #NIST_bound_box = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/shapefiles",layer='NIST_30m_BB') # shapefile data in /urbanVPRM_30m/shapefiles/
 
 #####  HERE ######
-#bound_box_0 = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/shapefiles", layer='Toronto_500m_BB')
+#For Toronto uncomment this line:
+bound_box_0 = readOGR(dsn="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/shapefiles", layer='Toronto_500m_BB')
 
-bound_box_0 = readOGR(dsn="E:/Research/UrbanVPRM/dataverse_files/TPD/shapefiles", layer='TPD_30m_BB_4km') #TPD/shapefiles",layer='TPD_30m_BB_4km') # shapefile data in /urbanVPRM_30m/shapefiles/
+#For fluxtowers uncomment this line:
+#bound_box_0 = readOGR(dsn="E:/Research/UrbanVPRM/dataverse_files/Borden/shapefiles", layer='Borden_30m_BB_4km') #TPD/shapefiles",layer='TPD_30m_BB_4km') # shapefile data in /urbanVPRM_30m/shapefiles/
 #bound_box = spTransform(bound_box_0, LANDSAT_CRS)
 bound_box_MODIS = spTransform(bound_box_0, '+proj=longlat +datum=WGS84 +no_defs')
 
 ## Import, reproject, and crop LC and ISA data
 # Land Cover
-LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/SMUrF/data/MCD12Q1/MCD12Q1.061_LC_Type1_doy2018001_aid0001.tif")
+LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/SMUrF/data/MCD12Q1/MCD12Q1.061_LC_Type1_doy2021001_aid0001.tif")
 LC_crop = crop(LC_ON, bound_box_MODIS)
 ##LC_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/ACI_LC_Borden.tif") #Land cover data from the annual crop inventory of Canada over Ontario
 ##LC_USA = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NLCD/LC/nlcd_2019_land_cover_l48_20210604.img") # Land Cover data from https://www.mrlc.gov/data
@@ -67,7 +69,7 @@ LC_crop = crop(LC_ON, bound_box_MODIS)
 #LClandsatcrop = mask(LClandsatcrop,bound_box)
 
 # ISA ***NEED to decide on dataset used and figure out how to get it in the right format
-ISA_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/GMIS_Toronto_ACI_SOLRIS_2018_impervious_GTA.tif")#all_aggregated_impervious_63_TPD.tif") # Impervious data from https://www.mrlc.gov/data
+ISA_ON = raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/Impermeable_Surface/GMIS_Toronto_ACI_SOLRIS_2021_impervious_GTA.tif")#all_aggregated_impervious_63_TPD.tif") # Impervious data from https://www.mrlc.gov/data
 #grid_ISA = projectRaster(ISA_ON,crs=MODIS_CRS)
 ISA_ONcrop = crop(ISA_ON,bound_box_MODIS)
 
@@ -83,18 +85,18 @@ ISA_ONcrop = crop(ISA_ON,bound_box_MODIS)
 #isa_resample <- resample(ISAlandsatcrop, LANDSAT_area, method = 'ngb')
 
 #See SMUrF code
-C4_ON = raster("C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ACI_C4_fraction_GTA_500m_2018.tif") # C3/C4 data from ACI aggregated to 500m res
+C4_ON = raster("C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ACI_C4_fraction_GTA_500m_2021.tif") # C3/C4 data from ACI aggregated to 500m res
 C4_ONcrop = crop(C4_ON,bound_box_MODIS)
 
 # Write Rasters
-writeRaster(LC_crop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif",
+writeRaster(LC_crop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif",
             overwrite=TRUE)
-writeRaster(ISA_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/ISA/ISA_TPD_GMIS_Toronto_ACI_SOLRIS_500m_2018.tif",
+writeRaster(ISA_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/ISA/ISA_GTA_GMIS_Toronto_ACI_SOLRIS_500m_2021.tif",
             overwrite=TRUE)
-writeRaster(C4_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/C4_frac_TPD_500m_2018.tif",
+writeRaster(C4_ONcrop,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/C4_frac_GTA_500m_2021.tif",
             overwrite=TRUE)
 
-#writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/LandCover/ACI_LC_Borden.tif",
+#writeRaster(lc_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA/LandCover/ACI_LC_Borden.tif",
 #            overwrite=TRUE)
 #writeRaster(isa_resample,filename="C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/ISA/ISA_Borden.tif",
 #            overwrite=TRUE)

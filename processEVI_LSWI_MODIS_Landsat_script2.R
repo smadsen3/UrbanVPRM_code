@@ -20,22 +20,39 @@ library("rgdal")
 library("lubridate")
 
 #MODIS:
-LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif")
+#LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif")
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_V061_500m_2018/LandCover/MODIS_V061_LC_Borden_500m_2018.tif")
+
 #SOLRIS:
 #LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 #LANDSAT 8 files
-setwd('E:/Research/UrbanVPRM/dataverse_files/TPD/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+#setwd('E:/Research/UrbanVPRM/dataverse_files/TPD/landsat/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Landsat_reflectance/landsat8') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+
 ls8 <- list.files()
 for (i in 1:length(ls8)){
   file <- stack(ls8[i])
   ## apply scale factors for reflectance data in the bands needed for EVI/LSWI calculation
-  file[[2]] <- file[[2]] * 0.0001
-  file[[4]] <- file[[4]] * 0.0001
-  file[[5]] <- file[[5]] * 0.0001
-  file[[6]] <- file[[6]] * 0.0001
-  file[[7]] <- file[[7]] * 0.0001
+  file[[2]][file[[2]]==0] <- NA
+  file[[2]] <- file[[2]] * 0.0000275-0.2
+  
+  file[[4]][file[[4]]==0] <- NA
+  file[[4]] <- file[[4]] * 0.0000275-0.2
+  
+  file[[5]][file[[5]]==0] <- NA
+  file[[5]] <- file[[5]] * 0.0000275-0.2
+  
+  file[[6]][file[[6]]==0] <- NA
+  file[[6]] <- file[[6]] * 0.0000275-0.2
+  
+  file[[7]][file[[7]]==0] <- NA
+  file[[7]] <- file[[7]] * 0.0000275-0.2
+  #file[[4]] <- file[[4]] * 0.0001
+  #file[[5]] <- file[[5]] * 0.0001
+  #file[[6]] <- file[[6]] * 0.0001
+  #file[[7]] <- file[[7]] * 0.0001
   clear_code <- c(322, 386, 834, 898, 1346)
   bad_pixels <- which(!(values(file[[11]]) %in% clear_code))
   values(file[[2]])[bad_pixels] <- NA
@@ -186,8 +203,8 @@ for(i in unique(inter_evi_lswi$Index)){
 # Write Table
 #write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden/adjusted_evi_lswi_interpolated_ls7and8.csv',row.names = F,
 #            sep=',')
-+write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/evi_lswi_interpolated_ls7and8.csv',row.names = F,
-+            sep=',')
+#write.table(inter_evi_lswi,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/evi_lswi_interpolated_ls7and8.csv',row.names = F,
+#            sep=',')
     
 
 

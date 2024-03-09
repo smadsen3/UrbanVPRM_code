@@ -109,25 +109,25 @@ library(zoo)
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_V061_500m_2018'
+#city = 'Borden_V061_500m_2020'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = "TP39_V061_500m_2018"
+#city = "TP39_V061_500m_2019"
 
-xmin = -80.5577-4/240
-xmax = -80.5577+4/240
-ymin =  42.6353-4/240
-ymax =  42.6353+4/240
-city = "TPD_V061_500m_2019"
+#xmin = -80.5577-4/240
+#xmax = -80.5577+4/240
+#ymin =  42.6353-4/240
+#ymax =  42.6353+4/240
+#city = "TPD_V061_500m_2019"
 
 #Toronto:
-#xmin = -79.7
-#xmax = -79.1
-#ymin =  43.5
-#ymax =  43.9
+xmin = -79.7
+xmax = -79.1
+ymin =  43.5
+ymax =  43.9
 
 # Create slightly larger bounding box to crop to (avoids dropped pixels at edge when reprojecting / resampling)
 bbox <- extent(xmin,xmax,ymin,ymax)
@@ -155,7 +155,7 @@ bbox.extra <- extent(xmin - buff, xmax + buff, ymin - buff, ymax + buff)
 
 #plot(tmp.stk$X2019.05.20.15.00.00,main='ERA5 SSRD, 2019/05/20, 15:00')
 
-yr = 2018
+yr = 2021
 
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
 
@@ -164,7 +164,7 @@ gridXY = as(raster::extent(bbox.extra), "SpatialPolygons")
 proj4string(gridXY) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 GOES.XY <- projectRaster(raster(gridXY),crs=GOES_CRS)
 
-inDIR <-'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2018/origTIFF/'
+inDIR <-'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2021/'
 rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
 
 ##Start list with the last day of April to match ERA5 data
@@ -197,7 +197,7 @@ rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://ef
 #plot(values(tmp.stk)[9,][0:500],type='o',pch=16,col='black',main='Black: ERA5, Red: GOES, SSRD, May 2019')
 #points(GOES.list[0:500],type='o',col='red')
 
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
 
 #GOES_raster<- function(dir,file){
 #  if(file.exists(paste0(dir,file))){
@@ -374,8 +374,9 @@ dm$sw_test[dm$sw_inter > max(dm$swrad,na.rm=TRUE) & is.na(dm$sw_test)] <- max(dm
 #dm$sw_test[dm$sw_test<0]<-0
 #dm$sw_inter[dm$sw_inter<0]<-0
 
+dir.create('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/',showWarnings=FALSE)
 #city<-'GTA_V061_500m_2018'
-saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/pre_processed_GOES/goes_TPD_2018_pre_processed_mean_filling_test_NA_rm.rds')
+saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/goes_GTA_2021_pre_processed_mean_filling_test_NA_rm.rds')
 
 
 ##Compare data in space

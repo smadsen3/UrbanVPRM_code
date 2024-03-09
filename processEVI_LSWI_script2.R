@@ -20,15 +20,15 @@ library("rgdal")
 library("lubridate")
 
 #MODIS:
-LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif")
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif")
 #SOLRIS:
 #LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 #MODIS reflectance files
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS_2021') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 mod_files <- list.files(pattern = 'MOD09A1.061_sur_refl_b01')
-yr<-2018
+yr<-2021
 
 
 #QC values where red,NIR, and blue pass the quality test:
@@ -137,7 +137,7 @@ EVI_LSWI.dt <- rbind(EVI_LSWI1.dt,EVI_LSWI2.dt,EVI_LSWI3.dt,EVI_LSWI4.dt,EVI_LSW
                      EVI_LSWI37.dt,EVI_LSWI38.dt,EVI_LSWI39.dt,EVI_LSWI40.dt,EVI_LSWI41.dt,EVI_LSWI42.dt,
                      EVI_LSWI43.dt,EVI_LSWI44.dt,EVI_LSWI45.dt,EVI_LSWI46.dt,EVI_LSWI47.dt,EVI_LSWI48.dt,
                      EVI_LSWI49.dt) 
-                #46 files for 2018, plus one from end of 2017, and two from beginning of 2019
+                #46 files for current year, plus one from end of previous, and two from beginning of next year
 
 ## order by DOY
 EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
@@ -154,11 +154,11 @@ EVI_LSWI.df[which(EVI_LSWI.df$LSWI < -1),'LSWI'] <- NA
 
 ## Set up new dataframe for EVI/LSWI Interpolation
 npixel <- length(unique(EVI_LSWI.df$Index))
-inter_evi_lswi <- as.data.frame(matrix(ncol = 2, nrow = npixel*378)) #min day is 2017 doy 361, max day is 2019 doy 9. 378 days total
+inter_evi_lswi <- as.data.frame(matrix(ncol = 2, nrow = npixel*379)) #min day is 2017 doy 361, max day is 2019 doy 9. 378 days total, 379 for 2020 and 2021
 colnames(inter_evi_lswi) <- c('Index', 'DOY')
-inter_evi_lswi[,1] <- rep(seq(1,npixel,1), 378)
+inter_evi_lswi[,1] <- rep(seq(1,npixel,1), 379)
 inter_evi_lswi <- inter_evi_lswi[order(inter_evi_lswi[,1]),]
-inter_evi_lswi[,2] <- rep(seq(-3,374,1), npixel)
+inter_evi_lswi[,2] <- rep(seq(-4,374,1), npixel) #change to -3,375 for leap years, -3,374 for non-leap years, -4, 374 for year after leap year
 inter_evi_lswi <- merge(inter_evi_lswi, EVI_LSWI.df[,c('Index', 'EVI', 'LSWI', 'DOY')], by = c('Index', 'DOY'), all = TRUE)
 inter_evi_lswi  <- inter_evi_lswi[order(inter_evi_lswi[,'Index'],inter_evi_lswi [,'DOY']),]
 
@@ -178,7 +178,7 @@ for(i in unique(inter_evi_lswi$Index)){
   if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$EVI)),'EVI']) > 10){
     pix <- inter_evi_lswi[which(inter_evi_lswi$Index == i),]
     spl <- with(pix[!is.na(pix$EVI),],smooth.spline(DOY,EVI, spar = .25)) 
-    inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- predict(spl, c(-3:374))$y
+    inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- predict(spl, c(-3:375))$y
   } else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- NA}
   print(round(i/npixel*100, 1))
 }
@@ -191,7 +191,7 @@ for(i in unique(inter_evi_lswi$Index)){
   if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$LSWI)),'LSWI']) > 10){
     pix <- inter_evi_lswi[which(inter_evi_lswi$Index == i),]
     spl <- with(pix[!is.na(pix$LSWI),],smooth.spline(DOY,LSWI, spar = .25)) 
-    inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- predict(spl, c(-3:374))$y
+    inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- predict(spl, c(-3:375))$y
   } else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- NA}
   print(round(i/npixel*100, 1))
 }
@@ -226,8 +226,8 @@ inter_evi_lswi.dt<-inter_evi_lswi.dt[inter_evi_lswi.dt$DOY>0 & inter_evi_lswi.dt
 inter_evi_lswi.df<-as.data.frame(inter_evi_lswi.dt)#convert back to dataframe
 
 
-#uncomment line below to save linearly ionterpolated LSWI
-inter_evi_lswi.df$LSWI_inter<-inter_evi_lswi.df$LSWI_inter_linear
+#uncomment line below to save linearly interpolated LSWI
+#inter_evi_lswi.df$LSWI_inter<-inter_evi_lswi.df$LSWI_inter_linear
 inter_evi_lswi.df$LSWI_inter_linear<-NULL
 
 inter_evi_lswi.df$LSWI_inter[inter_evi_lswi.df$LSWI_inter<min(inter_evi_lswi.df$LSWI,na.rm=TRUE) & !is.na(inter_evi_lswi.df$LSWI_inter)]<-min(inter_evi_lswi.df$LSWI,na.rm=TRUE)
@@ -263,7 +263,7 @@ inter_evi_lswi.df$LSWI_inter[inter_evi_lswi.df$LSWI_inter>max(inter_evi_lswi.df$
 
 ##inter_evi_lswi[inter_evi_lswi$DOY>0 & inter_evi_lswi<366]
 
-write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/adjusted_evi_lswi_interpolated_modis_v061_qc_filtered_LSWI_filtered.csv',row.names = F,
+write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/adjusted_evi_lswi_interpolated_modis_v061_qc_filtered_LSWI_filtered.csv',row.names = F,
             sep=',')
 
 

@@ -1,3 +1,4 @@
+memory.limit(size=5e6)
 ## IAN SMITH
 ## iasmith [at] bu.edu
 
@@ -6,6 +7,7 @@
 # Directories in this script correspond to the structure of the computing cluster where model calculations were executed.
 # To run this code, file paths and directories will need to be restructured to import/write files
 # Hourly RAP data were downloaded from https://www.ncei.noaa.gov/data/rapid-refresh/access/historical/analysis/
+# more recent (2020 onward) RAP data available at https://www.ncei.noaa.gov/data/rapid-refresh/access/rap-130-13km/analysis/
 
 # import packages
 library(StreamMetabolism)
@@ -25,40 +27,40 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_V061_500m_2018'
+#city = 'Borden_V061_500m_2020'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = "TP39_V061_500m_2018"
+#city = "TP39_V061_500m_2020"
 
-xmin = -80.5577-4/240
-xmax = -80.5577+4/240
-ymin =  42.6353-4/240
-ymax =  42.6353+4/240
-city = "TPD_V061_500m_2019"
+#xmin = -80.5577-4/240
+#xmax = -80.5577+4/240
+#ymin =  42.6353-4/240
+#ymax =  42.6353+4/240
+#city = "TPD_V061_500m_2020"
 
-#xmin = -79.7
-#xmax = -79.1
-#ymin =  43.5
-#ymax =  43.9
-#city = 'GTA_V061_500m_2018'
+xmin = -79.7
+xmax = -79.1
+ymin =  43.5
+ymax =  43.9
+city = 'GTA_V061_500m_2021'
 
-yr = 2018
+yr = 2021
  
 
 # Set/Create file directories
-inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/origTIFF/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/origTIFF/')
 dir.create(paste0(city),showWarnings = FALSE)
 dir.create(paste0(city,'/',yr),showWarnings = FALSE)
 outDIR <- paste0(city,'/',yr)
-rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/RAPgrib/subfolder/')
+rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/RAPgrib/subfolder/')
 
-eraDIR<- paste0('C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ERA5/2018/easternCONUS/')
+eraDIR<- paste0('C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ERA5/2021/')#easternCONUS/')
   
 # Time file
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -69,7 +71,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_V061_500m_2018/LandCover/MODIS_V061_LC_TPD_500m_2018.tif')
+md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif')
 values(md) <- 1
 #values(ls) <- 1
 md.spdf <- as(md, 'SpatialPointsDataFrame')
@@ -110,6 +112,14 @@ rl <- list.files(path=inDIR,pattern='rap') #need to create tif files for rap dat
 #  y <- list(m)
 #  return(y)
 #}
+names_130 <- paste0(substr(rl[grep("rap_130",rl)],9,16), substr(rl[grep("rap_130",rl)],18,19))
+names_252 <- paste0(substr(rl[grep("rap_252",rl)],9,16), substr(rl[grep("rap_252",rl)],18,19))
+files_252 <- which(names_252 %in% setdiff(names_252,names_130)) #find missing RAP_130 files that are available as RAP_252
+
+rl_130 <- rl[grep("rap_130",rl)]
+rl_252 <- rl[grep("rap_252",rl)]
+rl_252 <- rl_252[files_252]
+rl_tot <- c(rl_130,rl_252)
 
 # function to extract RAP data for study domain
 rap2modis <- function(dir,file,domain){
@@ -126,7 +136,7 @@ rap2modis <- function(dir,file,domain){
 }
 
 # run function
-outlist <- mcmapply(rap2modis, dir=inDIR, file=rl, domain=city, mc.cores=1)
+outlist <- mcmapply(rap2modis, dir=inDIR, file=rl_tot, domain=city, mc.cores=1)
 xyvals<-as.data.table(as.data.frame(md.spdf))
 colnames(xyvals)[1]<-"tempK"
 xyvals$tempK=xyvals$tempK*NA
@@ -134,7 +144,7 @@ xyvals$tempK=xyvals$tempK*NA
 #rm(md,md.spdf,RAP.XY,RAP_EXT)
 
 # Compile all cropped and reprojected hourly rasters into single "long" data.table
-cnames <- paste0(substr(rl,9,16), substr(rl,18,19))
+cnames <- paste0(substr(rl_tot,9,16), substr(rl_tot,18,19))
 st <- stack(outlist)
 dt <- as.data.table(as.data.frame(st,xy=T))
 setnames(dt,c('x','y',cnames))
@@ -149,7 +159,7 @@ td[,datetime:=as.character(datetime)]
 setkey(td,chr)
 
 #CODE BELOW IS ONLY FOR MISSING DAYS OF RAP DATA:
-#For 2019 there are some missing dates
+#For 2019 and 2020 there are some missing dates
 missing_dates<-setdiff(as.numeric(td$datetime),as.numeric(dm$datetime))
 #test_dm<-dm[td,on='datetime']
 test_dm<-dm
@@ -221,10 +231,10 @@ ERAdm <- ERAtd[ERAdm, on='datetime']
 #date_vals<-NULL
 #for (i in missing_dates){
 #  if (length(date_vals)==0){
-#    date_vals<-sum(test_dm$tempK[test_dm$datetime==i],na.rm = TRUE)
+#    date_vals<-mean(ERAdm$tempK[ERAdm$datetime==i],na.rm = TRUE)
 #    #print(i)
 #  }else{
-#    date_vals<-append(date_vals,sum(test_dm$tempK[test_dm$datetime==i],na.rm = TRUE))
+#    date_vals<-append(date_vals,mean(ERAdm$tempK[ERAdm$datetime==i],na.rm = TRUE))
 #    #print(i)
 #  }
 #}
@@ -235,6 +245,8 @@ ERAdm <- ERAtd[ERAdm, on='datetime']
 for (i in missing_dates){
   test_dm$tempK[test_dm$datetime==i]<-ERAdm$tempK[ERAdm$datetime==i]
 }
+
+dm<-test_dm
 
 #days<-test_dm$datetime[test2_dm$tempK!=test_dm$tempK]
 
