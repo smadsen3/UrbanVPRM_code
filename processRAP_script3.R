@@ -25,13 +25,13 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_500m_2019'
+#city = 'Borden_500m_V061_no_adjustments_2019'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = "TP39_500m_2019"
+#city = 'TP39_500m_V061_no_adjustments_2019'
 
 #xmin = -80.5577-4/240
 #xmax = -80.5577+4/240
@@ -43,22 +43,22 @@ xmin = -79.7
 xmax = -79.1
 ymin =  43.5
 ymax =  43.9
-city = 'GTA_500m_2019'
+city = 'GTA_500m_V061_no_adjustments_2018'
 
-yr = 2019
+yr = 2018
  
 
 # Set/Create file directories
-inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/origTIFF/')
+inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/origTIFF/')
 dir.create(paste0(city),showWarnings = FALSE)
 dir.create(paste0(city,'/',yr),showWarnings = FALSE)
 outDIR <- paste0(city,'/',yr)
-rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/RAPgrib/subfolder/')
+rapDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/RAPgrib/subfolder/')
 
-eraDIR<- paste0('C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ERA5/2019/')
+eraDIR<- paste0('C:/Users/kitty/Documents/Research/SIF/SMUrF/data/ERA5/2018/easternCONUS')
   
 # Time file
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # time data found in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -69,7 +69,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
+md <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_V061_no_adjustments_2018/LandCover/MODIS_LC_GTA_500m_V061_no_adjustments_2018.tif')
 values(md) <- 1
 #values(ls) <- 1
 md.spdf <- as(md, 'SpatialPointsDataFrame')
@@ -236,7 +236,11 @@ for (i in missing_dates){
 
 #test2_dm$tempK-ERAdm$tempK
 
+#if no missing dates run this line:
+dm <- td[dm, on = 'datetime']
+#otherwise:
+dm <- test_dm
 
 # Save in RDS binary format to preserve space
-saveRDS(test_dm, paste0(outDIR,'/rap_',city,'_',yr,'.rds'))
+saveRDS(dm, paste0(outDIR,'/rap_',city,'.rds'))
 cat("\n Done 3!")
