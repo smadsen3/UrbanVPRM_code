@@ -33,7 +33,7 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #xmax = -79.9333+4/240
 #ymin = 44.3167-4/240
 #ymax = 44.3167+4/240
-#city = 'Borden_500m_2019'
+#city = 'Borden_500m_V061_no_adjustments_2019'
 
 #xmin = -80.5577-4/240
 #xmax = -80.5577+4/240
@@ -41,22 +41,22 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #ymax =  42.6353+4/240
 #city = 'TPD_500m_2019'
 
-#xmin = -80.3574-4/240
-#xmax = -80.3574+4/240
-#ymin =  42.7102-4/240
-#ymax =  42.7102+4/240
-#city = 'TP39_500m_2019'
+xmin = -80.3574-4/240
+xmax = -80.3574+4/240
+ymin =  42.7102-4/240
+ymax =  42.7102+4/240
+city = 'TP39_500m_V061_no_adjustments_2019'
 
-xmin = -79.7
-xmax = -79.1
-ymin =  43.5
-ymax =  43.9
-city = 'GTA_500m_2019'
+#xmin = -79.7
+#xmax = -79.1
+#ymin =  43.5
+#ymax =  43.9
+#city = 'GTA_500m_2019'
 
 yr = 2019
 
 # Set input and create output files directories
-inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2019/origTIFF/')
+#inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2019/origTIFF/')
 outDIR <- paste0(city,'/',yr)
 
 # Time file
@@ -71,7 +71,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/LandCover/MODIS_LC_TP39_500m_V061_no_adjustments_2019.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -89,7 +89,7 @@ GOES.XY <- projectRaster(raster(gridXY),crs=GOES_CRS)
 print("done! 1")
 
 # Create file list of data to project / crop / resample
-rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
+#rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
 
 # function to extract GOES data for study domain
 #goes2landsat <- function(dir,file){
@@ -106,30 +106,47 @@ rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://ef
 #  }
 #}
 
-goes2modis <- function(dir,file){
-  if(file.exists(paste0(dir,file))){
-    print(paste0("Processing file ",file))
-    m <- copy(ls)  
-    rs <- raster(paste0(dir,file), varname = 'ssi')
-    rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
-    rs[rs_c<3]<-NA # Remove values which have a 'bad' confidence level
-    goes.crop <- crop(rs,extent(GOES.XY))
-    goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
-    vals <- extract(goes.proj,ls.spdf)
-    values(m) <- vals
-    y <- list(m)
-    return(y)
-  }
+goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/pre_processed_GOES/goes_TP39_2019_pre_processed_mean_filling_test_NA_rm.rds")
+goes_data<-goes_data[,.(x,y,datetime,sw_test)]
+
+outlist<-NULL
+for (d in unique(goes_data$datetime)){
+  m<-copy(ls)
+  #print(paste0("Processing ",d))
+  godat<-rasterFromXYZ(goes_data[goes_data$datetime==d])
+  godat<-godat$sw_test
+  crs(godat)<-GOES_CRS
+  #godat<-crop(godat,extent(GOES.XY))
+  #godat<-projectRaster(godat,crs=MODIS_CRS)
+  vals<- extract(godat,ls.spdf)
+  values(m)<-vals
+  outlist<-append(outlist,m)
 }
+
+#goes2modis <- function(dir,file){
+#  if(file.exists(paste0(dir,file))){
+#    print(paste0("Processing file ",file))
+#    m <- copy(ls)  
+#    rs <- raster(paste0(dir,file), varname = 'ssi')
+#    rs_c <- raster(paste0(dir,file), varname = 'ssi_confidence_level')
+#    rs[rs_c<3]<-NA # Remove values which have a 'bad' confidence level
+#    goes.crop <- crop(rs,extent(GOES.XY))
+#    goes.proj <- projectRaster(goes.crop,crs=MODIS_CRS)
+#    vals <- extract(goes.proj,ls.spdf)
+#    values(m) <- vals
+#    y <- list(m)
+#    return(y)
+#  }
+#}
 
 print("done! 2")
 
 # run function
-outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
+#outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
 rm(ls,ls.spdf,GOES.XY)
 
 # Compile all cropped and reprojected hourly rasters into single "long" data.table
-cnames <- substr(rl,1,10)
+cnames <- as.character(times$datetime)#substr(rl,1,10)
 st = stack(outlist) 
 dt <- as.data.table(as.data.frame(st,xy=T))
 setnames(dt,c('x','y',cnames))    
@@ -142,7 +159,7 @@ setkey(dm,x,y,datetime)
 # GOES ssi data has NAs where the archive files are not available. These dates must be inspected, since interpolation to fill NAs is inappropriate for nighttime hours. For the year 2018, all of the missing data occur during nighttime hours. These are set to zero for the year.
 
 # Load RAP .rds file to join with GOES completed data.table
-rap2 <- readRDS(paste0(outDIR,'/rap_',city,'_',yr,'.rds'))#'_',yr,'.rds'))
+rap2 <- readRDS(paste0(outDIR,'/rap_',city,'.rds'))#'_',yr,'.rds'))
 setkey(rap2,x,y,datetime)
 rap2 <- dm[rap2]
 td <- times[,.(datetime,hour)]
@@ -151,38 +168,39 @@ setkey(td,datetime)
 setkey(rap2,datetime)
 rap2 <- td[rap2]
 
-# Deal with GOES NA values
-centX <- mean(xmin,xmax)
-centY <- mean(ymin,ymax)
+#Already did htis in pre-processing code
+## Deal with GOES NA values
+#centX <- mean(xmin,xmax)
+#centY <- mean(ymin,ymax)
 # 
-sun.rise <- function(x){
-  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[1]
-  return(y)
-}
-sun.set <- function(x){
-  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[2]
-  return(y)
-}
-# 
-sunrise <- melt.data.table(as.data.table(lapply(times$datetime,sun.rise)),variable.name = 'chr',value.name='posTime')
-sunrise[,chr:=seq(length(unique(times$chr)))][,riseTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
-sunrise <- sunrise[,.(chr,riseTime)]
-setkey(sunrise,chr)
-sunset <- melt.data.table(as.data.table(lapply(times$datetime,sun.set)),variable.name = 'chr',value.name='posTime')
-sunset[,chr:=seq(length(unique(times$chr)))][,setTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
-sunset <- sunset[,.(chr,setTime)]
-setkey(sunset,chr)
+#sun.rise <- function(x){
+#  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[1]
+#  return(y)
+#}
+#sun.set <- function(x){
+#  y <- sunrise.set(centY,centX,paste(substr(x,1,4),substr(x,5,6),substr(x,7,8),sep='/'),timezone='UTC')[2]
+#  return(y)
+#}
+## 
+#sunrise <- melt.data.table(as.data.table(lapply(times$datetime,sun.rise)),variable.name = 'chr',value.name='posTime')
+#sunrise[,chr:=seq(length(unique(times$chr)))][,riseTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
+#sunrise <- sunrise[,.(chr,riseTime)]
+#setkey(sunrise,chr)
+#sunset <- melt.data.table(as.data.table(lapply(times$datetime,sun.set)),variable.name = 'chr',value.name='posTime')
+#sunset[,chr:=seq(length(unique(times$chr)))][,setTime:=as.numeric(substr(as.character(ymd_hms(posTime)),12,13))]
+#sunset <- sunset[,.(chr,setTime)]
+#setkey(sunset,chr)
 
 rap2[,chr := .GRP, by = .(datetime)]
 setkey(rap2,chr)
-rap2 <- sunrise[rap2]
-rap2 <- sunset[rap2]
+#rap2 <- sunrise[rap2]
+#rap2 <- sunset[rap2]
 invisible(gc())
 
-rap2[swrad<=0, swrad:=NA]
+#rap2[swrad<=0, swrad:=NA]
 
-rap2[is.na(swrad) & hour<=riseTime+1,swrad:=0]
-rap2[is.na(swrad) & hour>=setTime-1,swrad:=0]
+#rap2[is.na(swrad) & hour<=riseTime+1,swrad:=0]
+#rap2[is.na(swrad) & hour>=setTime-1,swrad:=0]
 
 
 
@@ -255,7 +273,7 @@ rap2 <- rap2[,-1]
 
 # import raster used for indexing
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_500m_2019/LandCover/MODIS_LC_GTA_500m_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/LandCover/MODIS_LC_TP39_500m_V061_no_adjustments_2019.tif')
 
 
 ## Function to convert tif into a datatable..
@@ -277,4 +295,4 @@ setkey(Idx.dt, x,y)
 setkey(rap2,x,y)
 
 # Save in RDS binary format to preserve space
-saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_',yr,'_hourly_test.rds'))
+saveRDS(rap2,paste0(outDIR,'/rap_goes_',city,'_hourly_fixed.rds'))
