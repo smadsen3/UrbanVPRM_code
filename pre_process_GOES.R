@@ -155,7 +155,7 @@ bbox.extra <- extent(xmin - buff, xmax + buff, ymin - buff, ymax + buff)
 
 #plot(tmp.stk$X2019.05.20.15.00.00,main='ERA5 SSRD, 2019/05/20, 15:00')
 
-yr = 2021
+yr = 2018
 
 GOES_CRS = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 "
 
@@ -164,7 +164,7 @@ gridXY = as(raster::extent(bbox.extra), "SpatialPolygons")
 proj4string(gridXY) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 GOES.XY <- projectRaster(raster(gridXY),crs=GOES_CRS)
 
-inDIR <-'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2021/'
+inDIR <-'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2018/origTIFF/'
 rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://eftp.ifremer.fr/cersat-rt/project/osi-saf/data/radflux/
 
 ##Start list with the last day of April to match ERA5 data
@@ -197,7 +197,7 @@ rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://ef
 #plot(values(tmp.stk)[9,][0:500],type='o',pch=16,col='black',main='Black: ERA5, Red: GOES, SSRD, May 2019')
 #points(GOES.list[0:500],type='o',col='red')
 
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
 
 #GOES_raster<- function(dir,file){
 #  if(file.exists(paste0(dir,file))){
@@ -374,9 +374,9 @@ dm$sw_test[dm$sw_inter > max(dm$swrad,na.rm=TRUE) & is.na(dm$sw_test)] <- max(dm
 #dm$sw_test[dm$sw_test<0]<-0
 #dm$sw_inter[dm$sw_inter<0]<-0
 
-dir.create('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/',showWarnings=FALSE)
+dir.create('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2018/pre_processed_GOES/',showWarnings=FALSE)
 #city<-'GTA_V061_500m_2018'
-saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/goes_GTA_2021_pre_processed_mean_filling_test_NA_rm.rds')
+saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2018/pre_processed_GOES/goes_GTA_2018_pre_processed_mean_filling_test_NA_rm.rds')
 
 
 ##Compare data in space

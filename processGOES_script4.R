@@ -22,6 +22,9 @@ library(raster)
 library(sp)
 library(parallel)
 library(lubridate)
+library(ggplot2)
+#library(terra)
+#library(smoothr)
 
 setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files')
 
@@ -57,7 +60,8 @@ yr = 2021
 
 # Set input and create output files directories
 inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2021/origTIFF/')
-outDIR <- paste0(city,'/',yr)
+#outDIR <- paste0(city,'/',yr)
+outDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/',yr)
 
 # Time file
 times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2021/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
@@ -72,6 +76,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif')
+#ls <- raster('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -108,6 +113,8 @@ rl <- list.files(path=inDIR,pattern='GOES') # GOES data downloaded from ftp://ef
 
 #goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2018/pre_processed_GOES/goes_GTA_2018_pre_processed_mean_filling_test_NA_rm.rds")
 goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/goes_GTA_2021_pre_processed_mean_filling_test_NA_rm.rds")
+#goes_data<-readRDS("E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/pre_processed_GOES/goes_GTA_2021_pre_processed_mean_filling_test_NA_rm.rds")
+
 
 goes_data<-goes_data[,.(x,y,datetime,sw_test)]
 
@@ -120,7 +127,7 @@ for (d in unique(goes_data$datetime)){
   crs(godat)<-GOES_CRS
   #godat<-crop(godat,extent(GOES.XY))
   #godat<-projectRaster(godat,crs=MODIS_CRS)
-  vals<- extract(godat,ls.spdf)
+  vals<- extract(godat,ls.spdf,method='bilinear')
   values(m)<-vals
   outlist<-append(outlist,m)
 }
@@ -145,6 +152,8 @@ for (d in unique(goes_data$datetime)){
 
 print("done! 2")
 
+
+
 # run function
 #outlist <- mcmapply(goes2modis, dir=inDIR, file=rl, mc.cores=1)  
 rm(ls,ls.spdf,GOES.XY)
@@ -160,7 +169,39 @@ dm <- melt.data.table(dt,id.vars=c('x','y'),variable.name='datetime',value.name=
 dm[,datetime:=as.character(datetime)][,swrad:=as.numeric(swrad)]
 setkey(dm,x,y,datetime)
 
+#x_test <- dm$x[dm$datetime==2020082520]
+#y_test <- dm$y[dm$datetime==2020082520]
+
+####Select an hour of the year to plot GOES data
+#sw <- dm$swrad[dm$datetime==2020082520]#7074]#2470]
+###sw_ex <- GOES.dt_ex$swRad[GOES.dt_ex$HoY==3021]#4118]#7074]#2470]
+###Ind <- GOES.dt$Index[GOES.dt$HoY==3021]#4119]#7074]#2470]
+###GOES_x <- GOES.dt$x[GOES.dt$HoY==3021]#4119]#7074]#2470
+###GOES_y <- GOES.dt$y[GOES.dt$HoY==3021]#4119]
+
+####Convert it into a dataframe for plotting
+#GOES.df <- data.frame(x=x_test,y=y_test,swRad=sw)
+
+#ggplot(GOES.df,                       # Draw ggplot2 plot
+#       aes(x = x_test, y = y_test, width=1/240,
+#       height=1/240)) + geom_tile(aes(fill=swRad))+ coord_equal() + ggtitle('GOES SSRD (T = 2020082520)')
+
 # GOES ssi data has NAs where the archive files are not available. These dates must be inspected, since interpolation to fill NAs is inappropriate for nighttime hours. For the year 2018, all of the missing data occur during nighttime hours. These are set to zero for the year.
+
+#library(fields)
+#test.spline<-Tps(data.frame(gx=x_test,y=y_test), sw)
+#new.grid <- predictSurface(test.spline)
+
+#new_x <- new.grid$x
+#new_y <- new.grid$y
+#new_sw <- new.grid$z
+#new.df <- data.frame(x=new_x,y=new_y,swRad=new_sw[1])
+#ggplot(new.df,                       # Draw ggplot2 plot
+#       aes(x = new_x, y = new_y, width=0.008227849,
+#       height=0.008227849)) + geom_tile(aes(fill=swRad))+ coord_equal() + ggtitle('GOES SSRD (T = 2018082520)')
+
+
+#image(new.grid)
 
 # Load RAP .rds file to join with GOES completed data.table
 rap2 <- readRDS(paste0(outDIR,'/rap_',city,'.rds'))#'_',yr,'.rds'))
@@ -284,6 +325,7 @@ rap2 <- rap2[,-1]
 # import raster used for indexing
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif')
+#ls <- raster('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif')
 
 
 ## Function to convert tif into a datatable..

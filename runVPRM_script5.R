@@ -39,6 +39,7 @@ nrow_block=2500
 
 # Climate data folder
 dir_clima = paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/2021') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
+#dir_clima = paste0('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/2021') # climate data in /urbanVPRM_30m/driver_data/rap_goes/
 
 ## Define the path to the folder where outputs are saved 
 dir.create(paste0("outputs"), showWarnings = FALSE)
@@ -59,15 +60,21 @@ tifdt_fun = function(raster,name){
 ## Land cover and ISA
 ## NEED TO CONVERT LC DATA TO SAME FORMAT AS NLCD DATA
 LC = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+#LC = raster('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
+
 LC.dt = tifdt_fun(LC,"LandCover")
 #LC_NIST = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/NIST30/Landcover/LC_NIST.tif') # Land cover data in /urbanVPRM_30m/driver_data/lc_isa/
 #LC_NIST.dt = tifdt_fun(LC_NIST,"LandCover")
 
 ISA_dat = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/ISA/ISA_GTA_GMIS_Toronto_ACI_SOLRIS_500m_2021.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+#ISA_dat = raster('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/ISA/ISA_GTA_GMIS_Toronto_ACI_SOLRIS_500m_2021.tif') # Impervious data in /urbanVPRM_30m/driver_data/lc_isa/
+
 ISA_dat<-resample(ISA_dat,LC) #for some reason x and y were offset by 1*10^-9 compared to LC raster, fix it by resampling
 ISA.dt = tifdt_fun(ISA_dat,"ISA")
 
 C4 = raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/C4_frac_GTA_500m_2021.tif') # C4 fraction
+#C4 = raster('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/C4_frac_GTA_500m_2021.tif') # C4 fraction
+
 C4<-resample(C4,LC) #for some reason x and y were offset by 1*10^-9 compared to LC raster, fix it by resampling
 C4.dt = tifdt_fun(C4,"C4")
 ## Merge LC and ISA
@@ -117,6 +124,7 @@ rm(greenup,dormancy,SoGS.dt,EoGS.dt)
 
 ## Landsat EVI and LSWI
 LS_VI.dt = fread('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/adjusted_evi_lswi_interpolated_modis_v061_qc_filtered_LSWI_filtered.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
+#LS_VI.dt = fread('E:/Research/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/adjusted_evi_lswi_interpolated_modis_v061_qc_filtered_LSWI_filtered.csv', data.table=FALSE) #EVI/LSWI data in /urbanVPRM_30m/driver_data/evi_lswi/
 
 #plot(LS_VI.dt$LSWI[LS_VI.dt$Index==11026])
 #points(LS_VI.dt$LSWI_inter[LS_VI.dt$Index==11026],col='blue')
@@ -313,12 +321,12 @@ for(j in 1:length(blocks)) {
   cat("\n Save data table with outputs..")
   
   if(length(blocks)>1){
-    write.table(output.dt, paste0("GTA_V061_500m_2021/vprm_GMIS_Toronto_ACI_SOLRIS_ISA_500m_GTA_V061_2021_no_PScale_adjusted_Topt_Ra_URB_parameters_fixed_gapfilled_LSWI_filtered_block_",sprintf("%08i",as.numeric(block)),".csv"),
+    write.table(output.dt, paste0("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/vprm_GMIS_Toronto_ACI_SOLRIS_ISA_500m_GTA_V061_2021_no_PScale_adjusted_Topt_Ra_URB_parameters_fixed_gapfilled_LSWI_filtered_bilinear_PAR_block_",sprintf("%08i",as.numeric(block)),".csv"),
                 row.names = F, sep = ',')
     #saveRDS(output.dt, paste0(dir_out,"/fluxes_",city,"_",yr,"_",veg_type,"_block_",
     #                          sprintf("%08i",as.numeric(block)),".rds"))
   } else {
-    write.table(output.dt, "GTA_V061_500m_2021/vprm_GMIS_Toronto_ACI_SOLRIS_ISA_500m_GTA_V061_2021_no_PScale_adjusted_Topt_Ra_URB_parameters_fixed_gapfilled_LSWI_filtered.csv",row.names = F,
+    write.table(output.dt, "C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/vprm_GMIS_Toronto_ACI_SOLRIS_ISA_500m_GTA_V061_2021_no_PScale_adjusted_Topt_Ra_URB_parameters_fixed_gapfilled_LSWI_filtered_bilinear_PAR.csv",row.names = F,
                 sep = ',')
   }
   
