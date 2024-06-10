@@ -13,19 +13,19 @@ xmin = -79.9333-4/240
 xmax = -79.9333+4/240
 ymin = 44.3167-4/240
 ymax = 44.3167+4/240
-city = 'Borden_500m_V061_no_adjustments_2018'
+city = 'Borden_500m_V061_adjusted_R_2018'
 
 #xmin = -80.3574-4/240
 #xmax = -80.3574+4/240
 #ymin =  42.7102-4/240
 #ymax =  42.7102+4/240
-#city = "TP39_V061_500m_2019"
+#city = "TP39_500m_V061_adjusted_R_2018"
 
 #xmin = -80.5577-4/240
 #xmax = -80.5577+4/240
 #ymin =  42.6353-4/240
 #ymax =  42.6353+4/240
-#city = "TPD_V061_500m_2019"
+#city = "TPD_V061_500m_2018"
 
 #Toronto:
 #xmin = -79.7
@@ -278,9 +278,9 @@ dm$sw_test[dm$sw_inter > max(dm$swrad,na.rm=TRUE) & is.na(dm$sw_test)] <- max(dm
 #dm$sw_test[dm$sw_test<0]<-0
 #dm$sw_inter[dm$sw_inter<0]<-0
 
-dir.create('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_no_adjustments_2018/pre_processed_GOES/',showWarnings=FALSE)
+dir.create('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/pre_processed_GOES/',showWarnings=FALSE)
 #city<-'GTA_V061_500m_2018'
-saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_no_adjustments_2018/pre_processed_GOES/goes_Borden_2018_pre_processed_mean_filling_NA_rm.rds')
+saveRDS(dm,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/pre_processed_GOES/goes_Borden_2018_pre_processed_mean_filling_NA_rm.rds')
 
 
 ##Compare data in space

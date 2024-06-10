@@ -29,23 +29,23 @@ setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files
 #setwd('/projectnb/buultra/iasmith/VPRM_urban_30m')
 
 # define study domain, city and year
-#xmin = -79.9333-4/240
-#xmax = -79.9333+4/240
-#ymin = 44.3167-4/240
-#ymax = 44.3167+4/240
-#city = 'Borden_500m_V061_no_adjustments_2019'
+xmin = -79.9333-4/240
+xmax = -79.9333+4/240
+ymin = 44.3167-4/240
+ymax = 44.3167+4/240
+city = 'Borden_500m_V061_adjusted_R_2019'
 
 #xmin = -80.5577-4/240
 #xmax = -80.5577+4/240
 #ymin =  42.6353-4/240
 #ymax =  42.6353+4/240
-#city = 'TPD_500m_2019'
+#city = 'TPD_500m_V061_adjusted_R_2018'
 
-xmin = -80.3574-4/240
-xmax = -80.3574+4/240
-ymin =  42.7102-4/240
-ymax =  42.7102+4/240
-city = 'TP39_500m_V061_no_adjustments_2019'
+#xmin = -80.3574-4/240
+#xmax = -80.3574+4/240
+#ymin =  42.7102-4/240
+#ymax =  42.7102+4/240
+#city = 'TP39_500m_V061_adjusted_R_2018'
 
 #xmin = -79.7
 #xmax = -79.1
@@ -53,14 +53,14 @@ city = 'TP39_500m_V061_no_adjustments_2019'
 #ymax =  43.9
 #city = 'GTA_500m_2019'
 
-yr = 2019
+yr = 2018
 
 # Set input and create output files directories
 #inDIR <- paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GOES/2019/origTIFF/')
 outDIR <- paste0(city,'/',yr)
 
 # Time file
-times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2019/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
+times <- fread(paste0('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/RAP/2018/times',yr,'.csv')) # times data in /urbanVPRM_30m/driver_data/times/
 setkey(times,chr)
 
 # CRS list
@@ -71,7 +71,7 @@ MODIS_CRS = "+proj=longlat +datum=WGS84 +no_defs"
 
 # Import raster of study domain and convert to SpatialPoints object for resampling
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/LandCover/MODIS_LC_TP39_500m_V061_no_adjustments_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/LandCover/MODIS_LC_Borden_500m_V061_adjusted_R_2018.tif')
 npixel <- ncell(ls)
 values(ls) <- 1
 ls.spdf <- as(ls,'SpatialPointsDataFrame')
@@ -106,7 +106,7 @@ print("done! 1")
 #  }
 #}
 
-goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/pre_processed_GOES/goes_TP39_2019_pre_processed_mean_filling_test_NA_rm.rds")
+goes_data<-readRDS("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/pre_processed_GOES/goes_Borden_2018_pre_processed_mean_filling_NA_rm.rds")
 goes_data<-goes_data[,.(x,y,datetime,sw_test)]
 
 outlist<-NULL
@@ -273,7 +273,7 @@ rap2 <- rap2[,-1]
 
 # import raster used for indexing
 #ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD/landsat/landsat8/ls_TPD2018_0203_8_2km_all_bands.tif') # landsat data in /urbanVPRM_30m/driver_data/landsat/
-ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TP39_500m_V061_no_adjustments_2019/LandCover/MODIS_LC_TP39_500m_V061_no_adjustments_2019.tif')
+ls <- raster('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/LandCover/MODIS_LC_Borden_500m_V061_adjusted_R_2018.tif')
 
 
 ## Function to convert tif into a datatable..

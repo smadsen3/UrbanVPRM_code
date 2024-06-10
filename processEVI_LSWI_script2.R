@@ -20,15 +20,15 @@ library("rgdal")
 library("lubridate")
 
 #MODIS:
-LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_500m_V061_no_adjustments_2019/LandCover/MODIS_LC_TPD_500m_V061_no_adjustments_2019.tif")
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/LandCover/MODIS_LC_Borden_500m_V061_adjusted_R_2018.tif")
 #SOLRIS:
 #LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 #MODIS reflectance files
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS_2019') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS_2018') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 mod_files <- list.files(pattern = 'MOD09A1.061_sur_refl_b01')
-yr<-2019
+yr<-2018
 
 #QC values where red,NIR, and blue pass the quality test:
 EVI_qc<-c(1073741824,1073954817,1075838976,1075838977,1075838979,1076051969,
@@ -195,7 +195,7 @@ inter_evi_lswi.dt<-inter_evi_lswi.dt[inter_evi_lswi.dt$DOY>0 & inter_evi_lswi.dt
 inter_evi_lswi.df<-as.data.frame(inter_evi_lswi.dt)#convert back to dataframe
 
 
-write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/TPD_500m_V061_no_adjustments_2019/adjusted_evi_lswi_interpolated_modis.csv',row.names = F,
+write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/adjusted_evi_lswi_interpolated_modis.csv',row.names = F,
             sep=',')
 
 
