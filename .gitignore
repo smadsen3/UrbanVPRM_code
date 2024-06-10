@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rproj.user/*
+.Rproj.user/C9F49317/*
+.pper
