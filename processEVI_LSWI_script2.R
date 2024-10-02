@@ -20,16 +20,15 @@ library("rgdal")
 library("lubridate")
 
 #MODIS:
-LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/LandCover/MODIS_V061_LC_GTA_500m_2021.tif")
+LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/LandCover/MODIS_LC_Borden_500m_V061_adjusted_R_2018.tif")
 #SOLRIS:
 #LC_dat<-raster("C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_SOLRIS/LandCover/LC_Borden.tif")
 ## Calculate EVI and LSWI indices for Landsat images that have been cropped to the study domain
 
 #MODIS reflectance files
-setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS_2021') # landsat data in /urbanVPRM_30m/driver_data/landsat/
+setwd('C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/MODIS_reflectance/MODIS_V061_GTA_AppEEARS_2018') # landsat data in /urbanVPRM_30m/driver_data/landsat/
 mod_files <- list.files(pattern = 'MOD09A1.061_sur_refl_b01')
-yr<-2021
-
+yr<-2018
 
 #QC values where red,NIR, and blue pass the quality test:
 EVI_qc<-c(1073741824,1073954817,1075838976,1075838977,1075838979,1076051969,
@@ -56,11 +55,6 @@ LSWI_qc<-c(1073741824,1073741877,1073954817,1073954869,1075838976,1075838977,
            1131675649,1131675701,1131937795,1131937847,1132462083,1132462135,
            1132675127,1134559235,1134559287,1135345667,1135345719,1135869955,
            1135870007,1136132099,1136132151)
-#ok_qc<-c(1073741824,1073954817,1075838976,1075838977,1075838979,1076051969,
-#         1076625411,1077149697,1077411843,1119879171,1121976323,1123287043,
-#         1123549187,1128267777,1130364929,1130364931,1131151363,1131675649,
-#         1131937795,1132462083,1134559235,1135345667,1135869955,1136132099)
-
 
 for (i in 1:length(mod_files)){
   ## read in raster stack
@@ -71,16 +65,19 @@ for (i in 1:length(mod_files)){
   mod_file_QC <- crop(stack(paste(substr(mod_files[i],1,21),"qc_500m",substr(mod_files[i],25,47),sep = "")),LC_dat)
   
   file <- stack(mod_file_red,mod_file_NIR,mod_file_blue,mod_file_SWIR,mod_file_QC)
-  # For the V061 data it appears the scale factors have already been applied to the data (before)
-  ## apply scale factors for reflectance data in the bands needed for EVI/LSWI calculation
+  ## apply scale factors for reflectance data in the bands needed for EVI/LSWI calculation (only for V6)
   #file[[1]] <- file[[1]] * 0.0001
   #file[[2]] <- file[[2]] * 0.0001
   #file[[3]] <- file[[3]] * 0.0001
   #file[[4]] <- file[[4]] * 0.0001
   
-  
   ## only keep clear observations determined from CFmask (pixel QA band 11 codes 322, 386, 834, 898, or 1346)
   #clear_code <- c(322, 386, 834, 898, 1346)
+  #bad_pixels <- which(!(values(file[[11]]) %in% clear_code))
+  #values(file[[2]])[bad_pixels] <- NA
+  #values(file[[4]])[bad_pixels] <- NA
+  #values(file[[5]])[bad_pixels] <- NA
+  #values(file[[6]])[bad_pixels] <- NA
   EVI_bad_pixels <- which(!(values(file[[5]])) %in% EVI_qc) 
   LSWI_bad_pixels <- which(!(values(file[[5]])) %in% LSWI_qc)
   file[[1]][EVI_bad_pixels]<-NA
@@ -89,10 +86,7 @@ for (i in 1:length(mod_files)){
   
   #file[[2]][LSWI_bad_pixels]<-NA
   file[[4]][LSWI_bad_pixels]<-NA
-  #values(file[[2]])[bad_pixels] <- NA
-  #values(file[[4]])[bad_pixels] <- NA
-  #values(file[[5]])[bad_pixels] <- NA
-  #values(file[[6]])[bad_pixels] <- NA
+  
   ### calculate EVI
   file[[6]] <- 2.5 * ((file[[2]] - file[[1]]) / (file[[2]] + 6 * file[[1]] - 7.5 * file[[3]] + 1))
   #file[[5]][abs(file[[5]])>1]<-NA
@@ -114,7 +108,7 @@ for (i in 1:length(mod_files)){
   # file name (replacement bellow uses file name)
   #TPD:
   #LSWI.dt$DOY = yday(ymd(paste0('2018',substr(ls8[i],12,15))))
-  #MODIS:
+  #Borden:
   if (as.numeric((substr(mod_files[i],29,32)))<yr){
     LSWI.dt$DOY = as.numeric((substr(mod_files[i],33,35)))-365+1
   }else if (as.numeric((substr(mod_files[i],29,32)))>yr){
@@ -122,6 +116,7 @@ for (i in 1:length(mod_files)){
   }else{
     LSWI.dt$DOY = as.numeric((substr(mod_files[i],33,35)))
   }
+  #LSWI.dt$DOY = as.numeric((substr(mod_files[i],33,35)))
   setnames(LSWI.dt,c("Index","x","y", "LSWI","DOY"))
   setkey(LSWI.dt,Index,x,y)
   ## save a data.table for each image
@@ -136,8 +131,7 @@ EVI_LSWI.dt <- rbind(EVI_LSWI1.dt,EVI_LSWI2.dt,EVI_LSWI3.dt,EVI_LSWI4.dt,EVI_LSW
                      EVI_LSWI31.dt,EVI_LSWI32.dt,EVI_LSWI33.dt,EVI_LSWI34.dt,EVI_LSWI35.dt,EVI_LSWI36.dt,
                      EVI_LSWI37.dt,EVI_LSWI38.dt,EVI_LSWI39.dt,EVI_LSWI40.dt,EVI_LSWI41.dt,EVI_LSWI42.dt,
                      EVI_LSWI43.dt,EVI_LSWI44.dt,EVI_LSWI45.dt,EVI_LSWI46.dt,EVI_LSWI47.dt,EVI_LSWI48.dt,
-                     EVI_LSWI49.dt) 
-                #46 files for current year, plus one from end of previous, and two from beginning of next year
+                     EVI_LSWI49.dt)
 
 ## order by DOY
 EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
@@ -145,20 +139,20 @@ EVI_LSWI.dt <- EVI_LSWI.dt[order(EVI_LSWI.dt$DOY),]
 ## convert to dataframe
 EVI_LSWI.df <- as.data.frame(EVI_LSWI.dt)
 
-## There are a few erroneous values with EVI >1 or EVI < -1 (e.g.EVI = 2.5). These are omitted from the dataset 
+## There are a few erroneous values e.g. EVI = 2.5. These are omitted from the dataset 
 EVI_LSWI.df[which(EVI_LSWI.df$EVI > 1),'EVI'] <- NA
 EVI_LSWI.df[which(EVI_LSWI.df$EVI < -1),'EVI'] <- NA
 
-EVI_LSWI.df[which(EVI_LSWI.df$LSWI > 1),'LSWI'] <- NA #same for LSWI (should only have values between -1 and 1)
+EVI_LSWI.df[which(EVI_LSWI.df$LSWI > 1),'LSWI'] <- NA
 EVI_LSWI.df[which(EVI_LSWI.df$LSWI < -1),'LSWI'] <- NA
 
 ## Set up new dataframe for EVI/LSWI Interpolation
 npixel <- length(unique(EVI_LSWI.df$Index))
-inter_evi_lswi <- as.data.frame(matrix(ncol = 2, nrow = npixel*379)) #min day is 2017 doy 361, max day is 2019 doy 9. 378 days total, 379 for 2020 and 2021
+inter_evi_lswi <- as.data.frame(matrix(ncol = 2, nrow = npixel*378))
 colnames(inter_evi_lswi) <- c('Index', 'DOY')
-inter_evi_lswi[,1] <- rep(seq(1,npixel,1), 379)
+inter_evi_lswi[,1] <- rep(seq(1,npixel,1), 378)
 inter_evi_lswi <- inter_evi_lswi[order(inter_evi_lswi[,1]),]
-inter_evi_lswi[,2] <- rep(seq(-4,374,1), npixel) #change to -3,375 for leap years, -3,374 for non-leap years, -4, 374 for year after leap year
+inter_evi_lswi[,2] <- rep(seq(-3,374,1), npixel)
 inter_evi_lswi <- merge(inter_evi_lswi, EVI_LSWI.df[,c('Index', 'EVI', 'LSWI', 'DOY')], by = c('Index', 'DOY'), all = TRUE)
 inter_evi_lswi  <- inter_evi_lswi[order(inter_evi_lswi[,'Index'],inter_evi_lswi [,'DOY']),]
 
@@ -178,7 +172,7 @@ for(i in unique(inter_evi_lswi$Index)){
   if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$EVI)),'EVI']) > 10){
     pix <- inter_evi_lswi[which(inter_evi_lswi$Index == i),]
     spl <- with(pix[!is.na(pix$EVI),],smooth.spline(DOY,EVI, spar = .25)) 
-    inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- predict(spl, c(-3:375))$y
+    inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- predict(spl, c(-3:374))$y
   } else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'EVI_inter'] <- NA}
   print(round(i/npixel*100, 1))
 }
@@ -191,79 +185,17 @@ for(i in unique(inter_evi_lswi$Index)){
   if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$LSWI)),'LSWI']) > 10){
     pix <- inter_evi_lswi[which(inter_evi_lswi$Index == i),]
     spl <- with(pix[!is.na(pix$LSWI),],smooth.spline(DOY,LSWI, spar = .25)) 
-    inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- predict(spl, c(-3:375))$y
+    inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- predict(spl, c(-3:374))$y
   } else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter'] <- NA}
   print(round(i/npixel*100, 1))
 }
 
-inter_evi_lswi$LSWI_inter_linear<-NA
-
-#inter_evi_lswi$LSWI_inter_no_smooth<-inter_evi_lswi$LSWI
-library(zoo)
-
-for(i in unique(inter_evi_lswi$Index)){
-  if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$LSWI)),'LSWI']) > 10){
-    inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter_linear'] <- na.approx(inter_evi_lswi$LSWI[inter_evi_lswi$Index==i],na.rm=FALSE)
-  } else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter_linear'] <- NA}
-  print(round(i/npixel*100, 1))
-}
-
-#inter_evi_lswi$LSWI_inter_linear[inter_evi_lswi$Index==i]<-na.approx(inter_evi_lswi$LSWI_inter_linear[inter_evi_lswi$Index==i])
-
-#i<-11026
-#if(is.finite(mean(inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI'], na.rm = T)) & length(inter_evi_lswi[which(inter_evi_lswi$Index == i & is.finite(inter_evi_lswi$LSWI)),'LSWI']) > 10){
-#  pix <- inter_evi_lswi[which(inter_evi_lswi$Index == i),]
-#  #spl <- with(pix[!is.na(pix$LSWI),],smooth.spline(DOY,LSWI, spar =0.4)) 
-#  spl <-with(pix[!is.na(pix$LSWI),],approx(DOY,y=LSWI)) 
-#  inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter_40'] <- predict(approx, c(-3:374))$y
-#} else {inter_evi_lswi[which(inter_evi_lswi$Index == i),'LSWI_inter_40'] <- NA}
-
-#THERE ARE STILL SOME NA VALUES IN THE LINEAR INTERPOLATED AT THE BEGINING/END OF THE YEAR (should mostly be filtered out in VPRM code though)
-inter_evi_lswi_test<-inter_evi_lswi
-
-inter_evi_lswi.dt<-as.data.table(inter_evi_lswi_test)
+inter_evi_lswi.dt<-as.data.table(inter_evi_lswi)
 inter_evi_lswi.dt<-inter_evi_lswi.dt[inter_evi_lswi.dt$DOY>0 & inter_evi_lswi.dt$DOY<366] #select only data that falls within the year
 inter_evi_lswi.df<-as.data.frame(inter_evi_lswi.dt)#convert back to dataframe
 
 
-#uncomment line below to save linearly interpolated LSWI
-#inter_evi_lswi.df$LSWI_inter<-inter_evi_lswi.df$LSWI_inter_linear
-inter_evi_lswi.df$LSWI_inter_linear<-NULL
-
-inter_evi_lswi.df$LSWI_inter[inter_evi_lswi.df$LSWI_inter<min(inter_evi_lswi.df$LSWI,na.rm=TRUE) & !is.na(inter_evi_lswi.df$LSWI_inter)]<-min(inter_evi_lswi.df$LSWI,na.rm=TRUE)
-inter_evi_lswi.df$LSWI_inter[inter_evi_lswi.df$LSWI_inter>max(inter_evi_lswi.df$LSWI,na.rm=TRUE) & !is.na(inter_evi_lswi.df$LSWI_inter)]<-max(inter_evi_lswi.df$LSWI,na.rm=TRUE)
-
-
-
-#stp<-inter_evi_lswi.df$x[366]-inter_evi_lswi.df$x[1]
-#das<-unique(inter_evi_lswi.df$DOY[inter_evi_lswi.df$LSWI_inter < min(inter_evi_lswi.df$LSWI,na.rm=TRUE) | inter_evi_lswi.df$LSWI_inter > max(inter_evi_lswi.df$LSWI,na.rm=TRUE)])
-
-#inter_evi_lswi.df$LSWI_test<-inter_evi_lswi.df$LSWI_inter
-
-#for (d in das) {
-#  idx<-which((inter_evi_lswi.df$LSWI_inter< min(inter_evi_lswi.df$LSWI,na.rm=TRUE) | inter_evi_lswi.df$LSWI_inter> max(inter_evi_lswi.df$LSWI,na.rm=TRUE)) & inter_evi_lswi.df$DOY==d)
-#  for (i in idx){
-#    id<-which(inter_evi_lswi.df$x <= inter_evi_lswi.df$x[i]+stp & inter_evi_lswi.df$x >= inter_evi_lswi.df$x[i]-stp & inter_evi_lswi.df$y <= inter_evi_lswi.df$y[i]+stp & inter_evi_lswi.df$y[i] >= inter_evi_lswi.df$y[i]-stp & inter_evi_lswi.df$DOY==d)
-#    id<-id[which(inter_evi_lswi.df$LSWI_inter[id]>min(inter_evi_lswi.df$LSWI,na.rm=TRUE) & inter_evi_lswi.df$LSWI_inter[id]<max(inter_evi_lswi.df$LSWI,na.rm=TRUE))]
-#    if(length(id)<2){#if there is 1 or less pixel that is within the valid range
-#      inter_evi_lswi.df$LSWI_test[i]<-mean(inter_evi_lswi.df$LSWI_inter[inter_evi_lswi.df$DOY==d & inter_evi_lswi.df$LSWI_inter>min(inter_evi_lswi.df$LSWI,na.rm=TRUE &inter_evi_lswi.df$LSWI_inter<max(inter_evi_lswi.df$LSWI,na.rm=TRUE))],na.rm=TRUE) #take the mean of the entire scene
-#      print(paste(d,i,'scene',sep=' '))
-#    }else{
-#      inter_evi_lswi.df$LSWI_test[i]<-mean(inter_evi_lswi.df$LSWI_inter[id],na.rm=TRUE)
-#    }
-#    #dm$sw_test[i]<-mean(dm$swrad[id],na.rm=TRUE)
-#    #print(c(h,i,id))
-#  }
-#  print(d)
-#  #for (i in length(dm$x[idx])){
-#  #  print(paste0("x: "+str(dm$x[idx][i])+"surrounding: "+str(vals[i])))
-#  #}
-#  
-#}
-
-##inter_evi_lswi[inter_evi_lswi$DOY>0 & inter_evi_lswi<366]
-
-write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/GTA_V061_500m_2021/adjusted_evi_lswi_interpolated_modis_v061_qc_filtered_LSWI_filtered.csv',row.names = F,
+write.table(inter_evi_lswi.df,'C:/Users/kitty/Documents/Research/SIF/UrbanVPRM/UrbanVPRM/dataverse_files/Borden_500m_V061_adjusted_R_2018/adjusted_evi_lswi_interpolated_modis.csv',row.names = F,
             sep=',')
 
 
